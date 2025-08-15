@@ -16,9 +16,9 @@ Created on 2025-08-14
 @contact: https://github.com/matteskes/TKT_Framework
 @description: Python application for the TKT
 """
-# Framework Project. This script sets up the build environment for the TKT Framework on Linux systems.
+# PROTOTYE FRAMEWORK # This script sets up the build environment for the TKT Framework on Linux systems.
 
-# Get the current working directory
+# We want to get and set the current working directory for the build.
 current_dir = os.getcwd()
 print(f"Current working directory: {current_dir}")
 # Ensure the system.config file exists
@@ -35,7 +35,7 @@ def prepare_build_environment():
         print("This script is intended for Linux systems only.")
         return False
     return True
-# Function to set environment variables for the build environment
+# Function to set environment variables for the build environment. May be better to pull these from the config file.
 def set_build_environment_variables():
         env_vars = {
             "CC": "/usr/bin/clang",
@@ -60,9 +60,7 @@ def set_build_environment_variables():
         for key, value in env_vars.items():
             os.environ[key] = value
         print("Environment variables set for build tools.")
-# Function to set build variable flags
-# This function sets various flags for the build process, including compiler flags, linker flags, and
-# Rust flags. These flags are optimized for performance and debugging, using Clang and LLVM tool
+# Function to set build variable flags. Maybe better to pull these from the config file.
 def set_build_variable_flags():
     build_flags = {
         "CFLAGS": "$CPPFLAGS -O3 -flto -pthread -g1 -fno-plt -fvisibility=hidden -fomit-frame-pointer -ffunction-sections -fdata-sections",
@@ -86,7 +84,9 @@ def main():
         print("Failed to prepare build environment.")
 if __name__ == "__main__":
     main()
-##Put funci
+##Put function here for interactive use giving the user the choice of kernel version and branch
+##possibly by having it poll remote server with available kernel versions to install.
+##This will most likely be something we add later on, as we are currently using a fixed version defined in the config file.
 
 # Clone the stable linux kernel repository using dulwich.
 def clone_linux_kernel_repo(current_dir):
