@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import platform
 import distro
 import os
@@ -18,14 +19,10 @@ Created on 2025-08-14
 """
 # PROTOTYE FRAMEWORK # This script sets up the build environment for the TKT Framework on Linux systems.
 
+# Prepares the environment, sets necessary environment variables, and configures build flags.
 # We want to get and set the current working directory for the build.
-current_dir = os.getcwd()
-print(f"Current working directory: {current_dir}")
-# Ensure the system.config file exists
-if not os.path.isfile("system.config"):
-    with open("system.config", "w") as f:
-        pass
-# Function to prepare the build environment
+# Get and print the initial current working directory.
+# Note about dev environment variables and flags: I'm wondering if we should set them here or pull from a config file.
 def prepare_build_environment():
     if platform.system() == "Linux":
         distro_name = distro.name(pretty=True)
@@ -35,7 +32,22 @@ def prepare_build_environment():
         print("This script is intended for Linux systems only.")
         return False
     return True
-# Function to set environment variables for the build environment. May be better to pull these from the config file.
+def get_current_working_directory():
+    return os.getcwd()
+print("Initial Current Working Directory:", os.getcwd())
+new_directory = "/tmp/build"
+if not os.path.exists(new_directory):
+    os.makedirs(new_directory)
+os.chdir(new_directory)
+print("Changed Current Working Directory to:", os.getcwd())
+config_files = ["system.config", "build.config"]
+for config_file in config_files:
+    if os.path.exists(config_file):
+        shutil.copy(config_file, new_directory)
+        print(f"Copied {config_file} to {new_directory}")
+    else:
+        print(f"{config_file} does not exist, skipping copy.")
+print("Final Current Working Directory:", os.getcwd())
 def set_build_environment_variables():
         env_vars = {
             "CC": "/usr/bin/clang",
@@ -60,7 +72,6 @@ def set_build_environment_variables():
         for key, value in env_vars.items():
             os.environ[key] = value
         print("Environment variables set for build tools.")
-# Function to set build variable flags. Maybe better to pull these from the config file.
 def set_build_variable_flags():
     build_flags = {
         "CFLAGS": "$CPPFLAGS -O3 -flto -pthread -g1 -fno-plt -fvisibility=hidden -fomit-frame-pointer -ffunction-sections -fdata-sections",
@@ -74,29 +85,27 @@ def set_build_variable_flags():
     for key, value in build_flags.items():
         os.environ[key] = value
         print(f"Build variable {key} set to: {value}")
-# This script sets up the build environment for the TKT Framework on Linux systems.
-def main():
+def init():
     if prepare_build_environment():
+        get_current_working_directory()
         set_build_environment_variables()
         set_build_variable_flags()
         print("Build environment prepared successfully.")
     else:
         print("Failed to prepare build environment.")
-if __name__ == "__main__":
-    main()
+if __name__ == "__init__":
+    init()
 ##Put function here for interactive use giving the user the choice of kernel version and branch
-##possibly by having it poll remote server with available kernel versions to install.
-##This will most likely be something we add later on, as we are currently using a fixed version defined in the config file.
+##possibly by having it poll our gh with a list of available branches and versions.
+##This will most likely be something we add later on, as we are most likely using a fixed version defined in the config file.
 
-# Clone the stable linux kernel repository using dulwich.
+# Clone the stable linux kernel repository using dulwich. This all should probably in included in the init function.
 def clone_linux_kernel_repo(current_dir):
     github_com = "https://github.com"
     repo_url = f"{github_com}/gregkh/linux"
-    repo = None  # Initialize repo outside try block
+    repo = None  
     try:
-        # Ensure the current_dir exists
         os.makedirs(current_dir, exist_ok=True)        
-        # Clone the Linux kernel repository
         repo = porcelain.clone(repo_url, current_dir)
         print(f"Successfully cloned {repo_url} to {current_dir}")
         return repo
@@ -104,8 +113,8 @@ def clone_linux_kernel_repo(current_dir):
         raise Exception(f"Failed to clone repository: {str(e)}")
     finally:
         print("Clone operation complete (success or failure). Performing any necessary cleanup...")
-        # If the repository was not cloned successfully, remove the directory
-        # This is a placeholder for any cleanup logic you might want to implement.
-        # if repo is None and os.path.exists(current_dir):
-        #     shutil.rmtree(current_dir)
-        # But for now, just a print for demonstration
+        if repo is None and os.path.exists(current_dir):
+            shutil.rmtree(current_dir)
+            print(f"Removed directory {current_dir} due to failed clone operation.")
+        else:
+            print(f"Repository cloned successfully, no cleanup needed for {current_dir}.")
