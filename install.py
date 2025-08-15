@@ -23,6 +23,9 @@ Created on 2025-08-14
 # We want to get and set the current working directory for the build.
 # Get and print the initial current working directory.
 # Note about dev environment variables and flags: I'm wondering if we should set them here or pull from a config file.
+# I would like to have prepare_build_environment() function that checks the Distro and pulls a .config file that parses the distro specifics like version, package manager build routines, etc. 
+# Maybe we could write a custom lib or libs that contains all the necessary functions to set up the environments for the build, per distro. So basically have it parse distro_name
+# and then set the environment variables and flags accordingly. Maybe then have it compiled as bytecode and then have it run as a subprocess to set the environment variables to improve performance.
 def prepare_build_environment():
     if platform.system() == "Linux":
         distro_name = distro.name(pretty=True)
@@ -96,8 +99,8 @@ def init():
 if __name__ == "__init__":
     init()
 ##Put function here for interactive use giving the user the choice of kernel version and branch
-##possibly by having it poll our gh with a list of available branches and versions.
-##This will most likely be something we add later on, as we are most likely using a fixed version defined in the config file.
+##possibly by having it poll our gh for a the patch versions available, and based on that, let the user choose which version to install.
+##This will probably be something we add later on, as we are most likely using a fixed version defined in the config file for now.
 
 # Clone the stable linux kernel repository using dulwich. This all should probably in included in the init function.
 def clone_linux_kernel_repo(current_dir):
@@ -118,3 +121,67 @@ def clone_linux_kernel_repo(current_dir):
             print(f"Removed directory {current_dir} due to failed clone operation.")
         else:
             print(f"Repository cloned successfully, no cleanup needed for {current_dir}.")
+# Patch the kernel source code with the latest patches from the TKT Framework.
+def patch_kernel_source(repo, patch_dir):
+    if not os.path.exists(patch_dir):
+        raise FileNotFoundError(f"Patch directory {patch_dir} does not exist.")
+    try:
+        porcelain.apply(repo, patch_dir)
+        print(f"Successfully applied patches from {patch_dir} to the kernel source.")
+    except Exception as e:
+        raise Exception(f"Failed to apply patches: {str(e)}")
+    finally:
+        print("Patch operation complete (success or failure).")
+# This function is used to build the kernel and modules.
+def build_kernel_and_modules(repo, build_dir):
+    if not os.path.exists(build_dir):
+        raise FileNotFoundError(f"Build directory {build_dir} does not exist.")
+    try:
+        porcelain.build(repo, build_dir)
+        print(f"Successfully built the kernel and modules in {build_dir}.")
+    except Exception as e:
+        raise Exception(f"Failed to build kernel and modules: {str(e)}")
+    finally:
+        print("Build operation complete (success or failure).")
+# This function is used to install the kernel and modules.
+def install_kernel_and_modules(repo, install_dir):
+    if not os.path.exists(install_dir):
+        raise FileNotFoundError(f"Install directory {install_dir} does not exist.")
+    try:
+        porcelain.install(repo, install_dir)
+        print(f"Successfully installed the kernel and modules to {install_dir}.")
+    except Exception as e:
+        raise Exception(f"Failed to install kernel and modules: {str(e)}")
+    finally:
+        print("Install complete (success or failure).")
+# This function is used to clean up the build environment.
+def cleanup_build_environment(build_dir):
+    if os.path.exists(build_dir):
+        shutil.rmtree(build_dir)
+        print(f"Successfully cleaned up the build environment at {build_dir}.")
+    else:
+        print(f"Build directory {build_dir} does not exist, nothing to clean up.")
+    finally:
+    print("Cleanup operation complete (success or failure).")
+# This function is used to run the entire build process.
+def run_build_process():
+    current_dir = get_current_working_directory()
+    try:
+        repo = clone_linux_kernel_repo(current_dir)
+        patch_dir = os.path.join(current_dir, "patches")
+        patch_kernel_source(repo, patch_dir)
+        build_dir = os.path.join(current_dir, "build")
+        build_kernel_and_modules(repo, build_dir)
+        install_dir = os.path.join(current_dir, "install")
+        install_kernel_and_modules(repo, install_dir)
+    except Exception as e:
+        raise Exception(f"An error occurred during the build process: {str(e)}")
+    finally:
+        cleanup_build_environment(build_dir)
+if __name__ == "__main__":
+    run_build_process()
+    print("Build process completed successfully.")
+else:
+    print("This script is intended to be run as a standalone program.")
+    print("Please run it directly to execute the build process.")
+# End of file
