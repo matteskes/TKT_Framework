@@ -9,7 +9,7 @@ import shutil
 """
 Created on 2025-08-14
 
-@author: M. Eskes - (C) 2025. All rights reserved.
+@author: M. Eskes and contributors- (C) 2025. All respective rights reserved.
 @license: GNU General Public License v2-only (GPLv2)
 @version: 0.0.1
 @project: TKT Framework Project
