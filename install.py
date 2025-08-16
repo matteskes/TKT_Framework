@@ -161,7 +161,6 @@ def cleanup_build_environment(build_dir):
         print(f"Successfully cleaned up the build environment at {build_dir}.")
     else:
         print(f"Build directory {build_dir} does not exist, nothing to clean up.")
-    finally:
     print("Cleanup operation complete (success or failure).")
 # This function is used to run the entire build process.
 def run_build_process():
