@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-
-import platform
-import distro
-import os
-import dulwich.porcelain as porcelain
-import shutil
-
 """
 Created on 2025-08-14
 
@@ -26,6 +19,16 @@ Created on 2025-08-14
 # I would like to have prepare_build_environment() function that checks the Distro and pulls a .config file that parses the distro specifics like version, package manager build routines, etc. 
 # Maybe we could write a custom lib or libs that contains all the necessary functions to set up the environments for the build, per distro. So basically have it parse distro_name
 # and then set the environment variables and flags accordingly. Maybe then have it compiled as bytecode and then have it run as a subprocess to set the environment variables to improve performance.
+
+
+import os
+import platform
+import shutil
+
+import distro # type: ignore
+import dulwich.porcelain as porcelain # type: ignore
+
+
 def prepare_build_environment():
     if platform.system() == "Linux":
         distro_name = distro.name(pretty=True)
@@ -35,8 +38,12 @@ def prepare_build_environment():
         print("This script is intended for Linux systems only.")
         return False
     return True
+
+
 def get_current_working_directory():
     return os.getcwd()
+
+
 print("Initial Current Working Directory:", os.getcwd())
 new_directory = "/tmp/build"
 if not os.path.exists(new_directory):
@@ -51,6 +58,8 @@ for config_file in config_files:
     else:
         print(f"{config_file} does not exist, skipping copy.")
 print("Final Current Working Directory:", os.getcwd())
+
+
 def set_build_environment_variables():
         env_vars = {
             "CC": "/usr/bin/clang",
@@ -75,6 +84,8 @@ def set_build_environment_variables():
         for key, value in env_vars.items():
             os.environ[key] = value
         print("Environment variables set for build tools.")
+
+
 def set_build_variable_flags():
     build_flags = {
         "CFLAGS": "$CPPFLAGS -O3 -flto -pthread -g1 -fno-plt -fvisibility=hidden -fomit-frame-pointer -ffunction-sections -fdata-sections",
@@ -88,6 +99,8 @@ def set_build_variable_flags():
     for key, value in build_flags.items():
         os.environ[key] = value
         print(f"Build variable {key} set to: {value}")
+
+
 def init():
     if prepare_build_environment():
         get_current_working_directory()
@@ -96,11 +109,14 @@ def init():
         print("Build environment prepared successfully.")
     else:
         print("Failed to prepare build environment.")
+
+
 if __name__ == "__init__":
     init()
 ##Put function here for interactive use giving the user the choice of kernel version and branch
 ##possibly by having it poll our gh for a the patch versions available, and based on that, let the user choose which version to install.
 ##This will probably be something we add later on, as we are most likely using a fixed version defined in the config file for now.
+
 
 # Clone the stable linux kernel repository using dulwich. This all should probably in included in the init function.
 def clone_linux_kernel_repo(current_dir):
@@ -121,6 +137,8 @@ def clone_linux_kernel_repo(current_dir):
             print(f"Removed directory {current_dir} due to failed clone operation.")
         else:
             print(f"Repository cloned successfully, no cleanup needed for {current_dir}.")
+
+
 # Patch the kernel source code with the latest patches from the TKT Framework.
 def patch_kernel_source(repo, patch_dir):
     if not os.path.exists(patch_dir):
@@ -132,6 +150,8 @@ def patch_kernel_source(repo, patch_dir):
         raise Exception(f"Failed to apply patches: {str(e)}")
     finally:
         print("Patch operation complete (success or failure).")
+
+
 # This function is used to build the kernel and modules.
 def build_kernel_and_modules(repo, build_dir):
     if not os.path.exists(build_dir):
@@ -143,6 +163,8 @@ def build_kernel_and_modules(repo, build_dir):
         raise Exception(f"Failed to build kernel and modules: {str(e)}")
     finally:
         print("Build operation complete (success or failure).")
+
+
 # This function is used to install the kernel and modules.
 def install_kernel_and_modules(repo, install_dir):
     if not os.path.exists(install_dir):
@@ -154,6 +176,8 @@ def install_kernel_and_modules(repo, install_dir):
         raise Exception(f"Failed to install kernel and modules: {str(e)}")
     finally:
         print("Install complete (success or failure).")
+
+
 # This function is used to clean up the build environment.
 def cleanup_build_environment(build_dir):
     if os.path.exists(build_dir):
@@ -162,6 +186,8 @@ def cleanup_build_environment(build_dir):
     else:
         print(f"Build directory {build_dir} does not exist, nothing to clean up.")
     print("Cleanup operation complete (success or failure).")
+
+
 # This function is used to run the entire build process.
 def run_build_process():
     current_dir = get_current_working_directory()
@@ -177,6 +203,8 @@ def run_build_process():
         raise Exception(f"An error occurred during the build process: {str(e)}")
     finally:
         cleanup_build_environment(build_dir)
+
+
 if __name__ == "__main__":
     run_build_process()
     print("Build process completed successfully.")
