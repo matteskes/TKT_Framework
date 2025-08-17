@@ -60,8 +60,6 @@ class KernelToolkitApp(App):
             yield Label(f"Sourced distribution-specific library for {distro}")
         except ImportError:
             yield Label(f"No distribution-specific library found for {distro}")
-
-
 # For example: install_binary = lib_module.generate_install_binary()
         except ImportError:
 # If the import fails, we yield a label indicating that no library was found
