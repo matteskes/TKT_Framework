@@ -46,11 +46,10 @@ def get_distribution_name():
     return get_like_distro()[0]
 
 #User interface for the Kernel Toolkit application using Textual.
-
 class KernelToolkitApp(App):
     title = "Kernel Toolkit"
 
-def compose(self):
+    def compose(self):
         welcome_message = "Welcome to The Kernel Toolkit. This program will help users compile and install your custom Linux kernel."
         yield Label(welcome_message)
         distro = get_distribution_name()
@@ -81,7 +80,7 @@ def compose(self):
         yield Button("Exit", id="exit")
 
 
-def on_button_pressed(self, event: Button.Pressed) -> None:
+    def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "exit":
             self.exit()
         else:
