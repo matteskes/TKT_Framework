@@ -21,14 +21,14 @@ Created on 2025-08-14
 # and then set the environment variables and flags accordingly. Maybe then have it compiled as bytecode and then have it run as a subprocess to set the environment variables to improve performance.
 
 
-import os
+#import os
 import platform
-import shutil
+#import shutil
 
 import configparser
 from textual.app import App
 from textual.widgets import Label, Button
-import dulwich.porcelain as porcelain # type: ignore
+#import dulwich.porcelain as porcelain # type: ignore
 import importlib
 
 
@@ -46,29 +46,26 @@ def get_distribution_name():
     return get_like_distro()[0]
 
 #User interface for the Kernel Toolkit application using Textual.
+
 class KernelToolkitApp(App):
-    title = "The Kernel Toolkit"
+    title = "Kernel Toolkit"
 
 def compose(self):
         welcome_message = "Welcome to The Kernel Toolkit. This program will help users compile and install your custom Linux kernel."
         yield Label(welcome_message)
         distro = get_distribution_name()
         yield Label(f"Detected distribution: {distro}")
-
-
 # Source a distribution-specific library (assuming modules like kernel_lib_ubuntu.py exist)
         try:
             lib_module = importlib.import_module(f"kernel_lib_{distro}")
             yield Label(f"Sourced distribution-specific library for {distro}")
-# Here, the library would be used to generate the compiled kernel's install binary
+# Here, the library would be used to perform distro-specific tasks.
 
 
 # For example: install_binary = lib_module.generate_install_binary()
         except ImportError:
-
 # If the import fails, we yield a label indicating that no library was found
             yield Label(f"No distribution-specific library found for {distro}")
-
 # Read the list of available kernels from settings.config
         config = configparser.ConfigParser()
         config.read('settings.config')
@@ -87,7 +84,9 @@ def compose(self):
 def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "exit":
             self.exit()
-
+        else:
+            self.exit(f"Button {event.button.id} pressed, but no action defined.")
+# Here you can add more actions for other buttons if needed.
 
 if __name__ == "__main__":
     KernelToolkitApp().run()
