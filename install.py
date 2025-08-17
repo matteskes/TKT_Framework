@@ -58,7 +58,8 @@ class KernelToolkitApp(App):
         try:
             lib_module = importlib.import_module(f"kernel_lib_{distro}")
             yield Label(f"Sourced distribution-specific library for {distro}")
-# Here, the library would be used to perform distro-specific tasks.
+        except ImportError:
+            yield Label(f"No distribution-specific library found for {distro}")
 
 
 # For example: install_binary = lib_module.generate_install_binary()
