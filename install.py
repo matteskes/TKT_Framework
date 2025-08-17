@@ -67,8 +67,7 @@ class KernelToolkitApp(App):
 # If the import fails, we yield a label indicating that no library was found
             yield Label(f"No distribution-specific library found for {distro}")
 # Read the list of available kernels from settings.config
-        config = configparser.ConfigParser()
-        config.read('settings.config')
+        kernels = []
         try:
             available_kernels_str = config.get('kernels', 'available')
             kernels = [k.strip() for k in available_kernels_str.split(',')]
@@ -76,8 +75,9 @@ class KernelToolkitApp(App):
             yield Label("No available kernels found in settings.config")
         else:
             yield Label("Available kernels for installation:")
-        for kernel in kernels:
-            yield Label(f"- {kernel}")
+            for kernel in kernels:
+                yield Label(f"- {kernel}")
+
         yield Button("Exit", id="exit")
 
 
