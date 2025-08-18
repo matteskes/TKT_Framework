@@ -45,9 +45,6 @@ def get_distribution_name():
 # Return the primary distribution name (first ID in the list)
     return get_like_distro()[0]
 
-
-
-
 #User interface for the Kernel Toolkit application using Textual.
 class KernelToolkitApp(App):
     title = "Kernel Toolkit"
