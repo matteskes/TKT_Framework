@@ -23,13 +23,12 @@ Created on 2025-08-14
 
 import os
 import platform
-#import shutil
 
 import configparser
+import importlib
+
 from textual.app import App
 from textual.widgets import Label, Button
-#import dulwich.porcelain as porcelain # type: ignore
-import importlib
 
 
 def get_like_distro():
@@ -60,13 +59,10 @@ class KernelToolkitApp(App):
             yield Label(f"Sourced distribution-specific library for {distro}")
         except ImportError:
             yield Label(f"No distribution-specific library found for {distro}")
-
 # For example: install_binary = lib_module.generate_install_binary()
         except ImportError:
-
 # If the import fails, we yield a label indicating that no library was found
             yield Label(f"No distribution-specific library found for {distro}")
-
 # Read the list of available kernels from settings.config
         config_path = os.path.join(os.path.dirname(__file__), "settings.config")
             
@@ -83,7 +79,6 @@ class KernelToolkitApp(App):
             yield Label("Available kernels for installation:")
             for kernel in kernels:
                 yield Label(f"- {kernel}")
-
         yield Button("Exit", id="exit")
 
 
