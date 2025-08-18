@@ -45,6 +45,9 @@ def get_distribution_name():
 # Return the primary distribution name (first ID in the list)
     return get_like_distro()[0]
 
+
+
+
 #User interface for the Kernel Toolkit application using Textual.
 class KernelToolkitApp(App):
     title = "Kernel Toolkit"
@@ -60,12 +63,15 @@ class KernelToolkitApp(App):
             yield Label(f"Sourced distribution-specific library for {distro}")
         except ImportError:
             yield Label(f"No distribution-specific library found for {distro}")
+            
 # For example: install_binary = lib_module.generate_install_binary()
         except ImportError:
+
 # If the import fails, we yield a label indicating that no library was found
             yield Label(f"No distribution-specific library found for {distro}")
+
 # Read the list of available kernels from settings.config
-        kernels = []
+        kernels = [settings.config.get(kernels,]]
         try:
             available_kernels_str = config.get('kernels', 'available')
             kernels = [k.strip() for k in available_kernels_str.split(',')]
