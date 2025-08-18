@@ -21,7 +21,7 @@ Created on 2025-08-14
 # and then set the environment variables and flags accordingly. Maybe then have it compiled as bytecode and then have it run as a subprocess to set the environment variables to improve performance.
 
 
-#import os
+import os
 import platform
 #import shutil
 
@@ -63,7 +63,7 @@ class KernelToolkitApp(App):
             yield Label(f"Sourced distribution-specific library for {distro}")
         except ImportError:
             yield Label(f"No distribution-specific library found for {distro}")
-            
+
 # For example: install_binary = lib_module.generate_install_binary()
         except ImportError:
 
@@ -71,7 +71,12 @@ class KernelToolkitApp(App):
             yield Label(f"No distribution-specific library found for {distro}")
 
 # Read the list of available kernels from settings.config
-        kernels = [settings.config.get(kernels,]]
+        config_path = os.path.join(os.path.dirname(__file__), "settings.config")
+            
+        config = configparser.ConfigParser()
+        config.read(config_path)
+
+        kernels = []
         try:
             available_kernels_str = config.get('kernels', 'available')
             kernels = [k.strip() for k in available_kernels_str.split(',')]
