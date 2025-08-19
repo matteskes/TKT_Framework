@@ -38,63 +38,62 @@ def get_distribution_name():
 class KernelToolkitApp(App):
     title = "Kernel Toolkit"
 
-def compose(self) -> ComposeResult:
-    welcome_message = "Welcome to The Kernel Toolkit. This program will help users compile and install your custom Linux kernel."
-    yield Label(welcome_message)
+    def compose(self) -> ComposeResult:
+        welcome_message = "Welcome to The Kernel Toolkit. This program will help users compile and install your custom Linux kernel."
+        yield Label(welcome_message)
 
-    distro = get_distribution_name()
-    yield Label(f"Detected distribution: {distro}")
+        distro = get_distribution_name()
+        yield Label(f"Detected distribution: {distro}")
 
-# Try sourcing a distribution-specific library
-    try:
-        lib_module = importlib.import_module(f"kernel_lib_{distro}")
-        yield Label(f"Sourced distribution-specific library for {distro}")
-    except ImportError:
-        yield Label(f"No distribution-specific library found for {distro}")
+        # Try sourcing a distribution-specific library
+        try:
+            lib_module = importlib.import_module(f"kernel_lib_{distro}")
+            yield Label(f"Sourced distribution-specific library for {distro}")
+        except ImportError:
+            yield Label(f"No distribution-specific library found for {distro}")
 
-# Read available kernels from settings.config
-    config_path = os.path.join(os.path.dirname(__file__), "settings.config")
-    config = configparser.ConfigParser()
-    config.read(config_path)
+        # Read available kernels from settings.config
+        config_path = os.path.join(os.path.dirname(__file__), "settings.config")
+        config = configparser.ConfigParser()
+        config.read(config_path)
 
-    kernels = []
-    try:
-        available_kernels_str = config.get('kernels', 'available')
-        kernels = [k.strip() for k in available_kernels_str.split(',')]
-    except (configparser.NoSectionError, configparser.NoOptionError):
-        yield Label("No available kernels found in settings.config")
-    else:
-        yield Label("Available kernels to build. ")
-        for kernel in kernels:
-            yield Label(f"- {kernel}")
+        kernels = []
+        try:
+            available_kernels_str = config.get('kernels', 'available')
+            kernels = [k.strip() for k in available_kernels_str.split(',')]
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            yield Label("No available kernels found in settings.config")
+        else:
+            yield Label("Available kernels to build. ")
+            for kernel in kernels:
+                yield Label(f"- {kernel}")
 
-# Always create the input field, disable it if no kernels found
-    yield Label("Please enter the kernel version you want to build:")
-    yield Input(
-        placeholder="Enter the kernel version to build" if kernels else "No kernels available. Please check settings.config or Press CTRL+Q to exit.",
-        id="kernel_version_input",
-        name="kernel_version_input",
-        disabled=not kernels,
-    )
+        # Always create the input field, disable it if no kernels found
+        yield Label("Please enter the kernel version you want to build:")
+        yield Input(
+            placeholder="Enter the kernel version to build" if kernels else "No kernels available. Please check settings.config or Press CTRL+Q to exit.",
+            id="kernel_version_input",
+            name="kernel_version_input",
+            disabled=not kernels,
+        )
+
+        # Add a submit button for the input
+    def on_input_submitted(self, event) -> None:
+        kernel_version = event.input.value.strip()
+        if not kernel_version:
+            self.query_one("#kernel_version_input", Input).placeholder = "Please enter a valid kernel version."
+            return
+
+        # Mock build feedback
+        self.query_one("#kernel_version_input", Input).placeholder = f"Selecting kernel version {kernel_version}..."
+        self.query_one("#kernel_version_input", Input).placeholder = f"Kernel version {kernel_version} Selected."
 
 
-# Add a submit button for the input
-def on_input_submitted(self, event) -> None:
-    kernel_version = event.input.value.strip()
-    if not kernel_version:
-        self.query_one("#kernel_version_input", Input).placeholder = "Please enter a valid kernel version."
-        return
-
-# Mock build feedback
-    self.query_one("#kernel_version_input", Input).placeholder = f"Selecting kernel version {kernel_version}..."
-    self.query_one("#kernel_version_input", Input).placeholder = f"Kernel version {kernel_version} Selected."
-
-
-def on_mount(self) -> None:
-# Focus the input if it’s enabled
-    input_widget = self.query_one("#kernel_version_input", Input)
-    if not input_widget.disabled:
-        input_widget.focus()
+    def on_mount(self) -> None:
+        # Focus the input if it’s enabled
+        input_widget = self.query_one("#kernel_version_input", Input)
+        if not input_widget.disabled:
+            input_widget.focus()
 
 
 if __name__ == "__main__":
