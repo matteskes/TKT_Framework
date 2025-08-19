@@ -103,11 +103,19 @@ class KernelToolkitApp(App):
             self.query_one("#kernel_version_input", Input).placeholder = "Please enter a valid kernel version."
             return
 
-        # Here you would typically call a function to handle the installation of the kernel.
-        # For now, we will just display a message.
+# Here you would typically call a function to handle the installation of the kernel.
+# For now, we will just display a message.
         self.query_one("#kernel_version_input", Input).placeholder = f"Installing kernel version {kernel_version}..."
-        # Simulate installation process
+# Simulate installation process
         self.query_one("#kernel_version_input", Input).placeholder = f"Kernel version {kernel_version} installed successfully!"
+
+
+    def on_mount(self):
+# Set the initial focus to the input field
+        self.query_one("#kernel_version_input", Input).focus()
+# This is the main entry point for the application.
+
+
 
 if __name__ == "__main__":
     app = KernelToolkitApp()
