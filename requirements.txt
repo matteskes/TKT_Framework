@@ -1,3 +1,11 @@
-distro
-configparser
+# runtime dependencies
 textual
+
+# dev dependencies
+mypy
+pytest
+pytest-cov
+pytest-mock
+black
+isort
+ruff

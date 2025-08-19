@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 88
-target-version = ["py313"]  # adjust for your Python version
+target-version = ["py311"]
 skip-string-normalization = false
 
 [tool.isort]
@@ -9,8 +9,22 @@ line_length = 88
 
 [tool.ruff]
 line-length = 88
-target-version = "py313"
-select = ["E", "F", "I"]  # errors, formatting, imports
-ignore = []
+target-version = "py311"
 fix = true
+include = ["pyproject.toml", "TKT/**/*.py"]
 
+[tool.ruff.lint]
+select = ["E", "F", "I"]  # errors, formatting, imports
+ignore = ["E501"]
+
+[project]
+name = "the-kernel-toolkit"
+version = "0.1.0"
+description = "Developmental repo for the TKT-Framework"
+requires-python = ">=3.11"
+dependencies = [
+    "textual",
+]
+
+[project.scripts]
+tkt = "TKT.cli:main"
