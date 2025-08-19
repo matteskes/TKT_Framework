@@ -81,7 +81,7 @@ class KernelToolkitApp(App):
             self.query_one("#kernel_version_input", Input).placeholder = "Please enter a valid kernel version."
             return
 
-        # Mock install feedback
+        # Mock build feedback
         self.query_one("#kernel_version_input", Input).placeholder = f"Selecting kernel version {kernel_version}..."
         self.query_one("#kernel_version_input", Input).placeholder = f"Kernel version {kernel_version} Selected."
 
