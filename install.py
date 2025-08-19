@@ -19,8 +19,9 @@ import importlib
 from textual.app import App, ComposeResult
 from textual.widgets import Label, Input
 
-
-def get_like_distro():
+# These two functions retrieve the distribution ID and any like distributions from the freedesktop.org os-release file
+# will be using these to determine the distribution for sourcing distribution-specific for libraries prebguild and postbuild
+def get_like_distro(): 
     info = platform.freedesktop_os_release()
     ids = [info["ID"]]
     if "ID_LIKE" in info:
@@ -31,7 +32,9 @@ def get_like_distro():
 def get_distribution_name():
     return get_like_distro()[0]
 
-
+#Main application class for the Kernel Toolkit
+# This class is responsible for the main application logic, including UI composition and event handling.
+# It uses Textual for the UI framework and provides a simple interface for users to select and build kernel versions.
 class KernelToolkitApp(App):
     title = "Kernel Toolkit"
 
@@ -74,7 +77,7 @@ class KernelToolkitApp(App):
             disabled=not kernels,
         )
 
-
+        # Add a submit button for the input
     def on_input_submitted(self, event) -> None:
         kernel_version = event.input.value.strip()
         if not kernel_version:
