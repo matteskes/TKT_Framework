@@ -61,14 +61,14 @@ class KernelToolkitApp(App):
         except (configparser.NoSectionError, configparser.NoOptionError):
             yield Label("No available kernels found in settings.config")
         else:
-            yield Label("Available kernels for installation:")
+            yield Label("Available kernels to build:")
             for kernel in kernels:
                 yield Label(f"- {kernel}")
 
         # Always create the input field, disable it if no kernels found
-        yield Label("Please enter the kernel version you want to install:")
+        yield Label("Please enter the kernel version you want to build:")
         yield Input(
-            placeholder="Enter the kernel version to install" if kernels else "No kernels available",
+            placeholder="Enter the kernel version to build" if kernels else "No kernels available",
             id="kernel_version_input",
             name="kernel_version_input",
             disabled=not kernels,
@@ -82,8 +82,8 @@ class KernelToolkitApp(App):
             return
 
         # Mock install feedback
-        self.query_one("#kernel_version_input", Input).placeholder = f"Installing kernel version {kernel_version}..."
-        self.query_one("#kernel_version_input", Input).placeholder = f"Kernel version {kernel_version} installed successfully!"
+        self.query_one("#kernel_version_input", Input).placeholder = f"Selecting kernel version {kernel_version}..."
+        self.query_one("#kernel_version_input", Input).placeholder = f"Kernel version {kernel_version} Selected."
 
 
     def on_mount(self) -> None:
