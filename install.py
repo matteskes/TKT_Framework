@@ -64,14 +64,14 @@ class KernelToolkitApp(App):
         except (configparser.NoSectionError, configparser.NoOptionError):
             yield Label("No available kernels found in settings.config")
         else:
-            yield Label("Available kernels to build:")
+            yield Label("Available kernels to build. ")
             for kernel in kernels:
                 yield Label(f"- {kernel}")
 
         # Always create the input field, disable it if no kernels found
         yield Label("Please enter the kernel version you want to build:")
         yield Input(
-            placeholder="Enter the kernel version to build" if kernels else "No kernels available",
+            placeholder="Enter the kernel version to build" if kernels else "No kernels available. Please check settings.config or Press CTRL+Q to exit.",
             id="kernel_version_input",
             name="kernel_version_input",
             disabled=not kernels,
