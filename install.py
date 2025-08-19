@@ -19,7 +19,6 @@ import importlib
 from textual.app import App, ComposeResult
 from textual.widgets import Label, Input
 
-
 # These two functions retrieve the distribution ID and any like distributions from the freedesktop.org os-release file
 # will be using these to determine the distribution for sourcing distribution-specific for libraries prebguild and postbuild
 def get_like_distro(): 
@@ -85,7 +84,6 @@ def on_input_submitted(self, event) -> None:
     if not kernel_version:
         self.query_one("#kernel_version_input", Input).placeholder = "Please enter a valid kernel version."
         return
-
 
 # Mock build feedback
     self.query_one("#kernel_version_input", Input).placeholder = f"Selecting kernel version {kernel_version}..."
