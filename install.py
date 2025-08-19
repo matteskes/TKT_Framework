@@ -28,7 +28,8 @@ import configparser
 import importlib
 
 from textual.app import App
-from textual.widgets import Label, Button
+from textual.widgets import Label, Button, Static
+
 
 
 def get_like_distro():
@@ -83,18 +84,19 @@ class KernelToolkitApp(App):
             for kernel in kernels:
                 yield Label(f"- {kernel}")
 
-        yield Button("Exit", id="exit")
+#                yield Button("Exit", id="exit")
 
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "exit":
-            self.exit()
-        else:
-            self.exit(f"Button {event.button.id} pressed, but no action defined.")
+#    def on_button_pressed(self, event: Button.Pressed) -> None:
+#        if event.button.id == "exit":
+#            self.exit()
+#        else:
+#            self.exit(f"Button {event.button.id} pressed, but no action defined.")
 # Here you can add more actions for other buttons if needed.
 
 if __name__ == "__main__":
-    KernelToolkitApp().run()
+    app = KernelToolkitApp()
+    app.run()
 
 
 # Will be removing commented code as it is replaced by reimplemented code.
