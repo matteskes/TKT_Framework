@@ -96,10 +96,13 @@ class KernelToolkitApp(App):
             input_widget.focus()
 
 
-if __name__ == "__main__":
+def main():
     app = KernelToolkitApp()
     app.run()
 
+
+if __name__ == "__main__":
+    main()
 
 
 # Will be removing commented code as it is replaced by reimplemented code.
