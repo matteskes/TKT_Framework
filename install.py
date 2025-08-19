@@ -28,7 +28,7 @@ import configparser
 import importlib
 
 from textual.app import App
-from textual.widgets import Label, Button, Static
+from textual.widgets import Label, Static, Input
 
 
 
@@ -84,15 +84,30 @@ class KernelToolkitApp(App):
             for kernel in kernels:
                 yield Label(f"- {kernel}")
 
-#                yield Button("Exit", id="exit")
+
+# Input field for the user to enter the kernel version they want to install.
+        if kernels:
+            yield Label("Please enter the kernel version you want to install:")    
+            yield Input(
+                    placeholder="Enter the kernel version to install",
+                    id="kernel_version_input",
+                    name="kernel_version_input"
+                    
+                )
 
 
-#    def on_button_pressed(self, event: Button.Pressed) -> None:
-#        if event.button.id == "exit":
-#            self.exit()
-#        else:
-#            self.exit(f"Button {event.button.id} pressed, but no action defined.")
-# Here you can add more actions for other buttons if needed.
+    def on_input_submitted(self, event):
+
+        kernel_version = event.input.value.strip()
+        if not kernel_version:
+            self.query_one("#kernel_version_input", Input).placeholder = "Please enter a valid kernel version."
+            return
+
+        # Here you would typically call a function to handle the installation of the kernel.
+        # For now, we will just display a message.
+        self.query_one("#kernel_version_input", Input).placeholder = f"Installing kernel version {kernel_version}..."
+        # Simulate installation process
+        self.query_one("#kernel_version_input", Input).placeholder = f"Kernel version {kernel_version} installed successfully!"
 
 if __name__ == "__main__":
     app = KernelToolkitApp()
