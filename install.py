@@ -74,6 +74,7 @@ class KernelToolkitApp(App):
             disabled=not kernels,
         )
 
+
     def on_input_submitted(self, event) -> None:
         kernel_version = event.input.value.strip()
         if not kernel_version:
@@ -83,6 +84,7 @@ class KernelToolkitApp(App):
         # Mock install feedback
         self.query_one("#kernel_version_input", Input).placeholder = f"Installing kernel version {kernel_version}..."
         self.query_one("#kernel_version_input", Input).placeholder = f"Kernel version {kernel_version} installed successfully!"
+
 
     def on_mount(self) -> None:
         # Focus the input if it’s enabled
