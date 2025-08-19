@@ -7,7 +7,7 @@ repos:
 
   # isort for import sorting
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 5.13.2 # pin to lastest stable
     hooks:
       - id: isort
 
