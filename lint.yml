@@ -1,0 +1,37 @@
+name: Lint & Format
+
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]  # adjust your default branch if needed
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repo
+      - uses: actions/checkout@v4
+
+      # Setup Python
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"  # match your project
+
+      # Install tools
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black isort ruff
+
+      # Run Black check
+      - name: Check Black formatting
+        run: black --check .
+
+      # Run Ruff linting
+      - name: Run Ruff
+        run: ruff check .
+
+      # (Optional) Run isort check separately (Ruff can do this too)
+      - name: Check isort imports
+        run: isort --check-only .

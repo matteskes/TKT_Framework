@@ -1,0 +1,16 @@
+[tool.black]
+line-length = 88
+target-version = ["py313"]  # adjust for your Python version
+skip-string-normalization = false
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+select = ["E", "F", "I"]  # errors, formatting, imports
+ignore = []
+fix = true
+

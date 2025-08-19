@@ -1,0 +1,19 @@
+repos:
+  # Black for formatting
+  - repo: https://github.com/psf/black
+    rev: 24.4.2  # pin to latest stable
+    hooks:
+      - id: black
+
+  # isort for import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+
+  # Ruff for linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+      - id: ruff-format  # optional, if you want Ruff formatting checks too
