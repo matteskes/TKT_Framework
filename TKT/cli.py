@@ -23,7 +23,7 @@ from textual.widgets import Input, Label
 
 # These two functions retrieve the distribution ID and any like distributions from the freedesktop.org os-release file
 # will be using these to determine the distribution for sourcing distribution-specific for libraries prebguild and postbuild
-def get_like_distro():
+def get_like_distro() -> list[str]:
     info = platform.freedesktop_os_release()
     ids = [info["ID"]]
     if "ID_LIKE" in info:
@@ -31,7 +31,7 @@ def get_like_distro():
     return ids
 
 
-def get_distribution_name():
+def get_distribution_name() -> str:
     return get_like_distro()[0]
 
 
