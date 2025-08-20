@@ -15,6 +15,7 @@ import configparser
 import importlib
 import os
 import platform
+import sys
 
 from textual.app import App, ComposeResult
 from textual.widgets import Input, Label
@@ -109,9 +110,15 @@ class KernelToolkitApp(App):
 
 
 def main():
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        print("Error: stdin and stdout must be a tty", file=sys.stderr)
+        return 1
+
     app = KernelToolkitApp()
     app.run()
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
