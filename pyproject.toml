@@ -28,7 +28,7 @@ include = ["pyproject.toml", "TKT/**/*.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]  # errors, formatting, imports
-ignore = ["E501"]
+ignore = ["E501", "F841"]
 
 [project]
 name = "the-kernel-toolkit"
