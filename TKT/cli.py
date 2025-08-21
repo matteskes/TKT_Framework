@@ -16,6 +16,7 @@ import importlib
 import os
 import platform
 import sys
+from types import ModuleType
 from typing import Final
 
 from textual.app import App, ComposeResult
@@ -71,8 +72,9 @@ class KernelToolkitApp(App):
         yield Label(f"Detected distribution: {distro}")
 
         # Try sourcing a distribution-specific library
+        lib_module: ModuleType | None = None
         try:
-            lib_module = importlib.import_module(f"kernel_lib_{distro}")
+            lib_module = importlib.import_module(f"TKT.kernel_lib_{distro}")
             yield Label(f"Sourced distribution-specific library for {distro}")
         except ImportError:
             yield Label(f"No distribution-specific library found for {distro}")
