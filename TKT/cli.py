@@ -16,25 +16,50 @@ import configparser
 import importlib
 import os
 import platform
+import sys
+from types import ModuleType
+from typing import Final
 
 from textual.app import App, ComposeResult
 from textual.widgets import Input, Label
 
-
-# These two functions retrieve the distribution ID and any like distributions
-def get_like_distro():
-    info = platform.freedesktop_os_release()
-    ids = [info["ID"]]
-    if "ID_LIKE" in info:
-        ids.extend(info["ID_LIKE"].split())
-    return ids
+SUPPORTED_DISTROS: Final[list[str]] = [
+    "debian",
+    "ubuntu",
+    "fedora",
+    "arch",
+]
 
 
-def get_distribution_name():
-    return get_like_distro()[0]
+def get_distribution_name() -> str:
+    if sys.platform != "linux":
+        raise RuntimeError("Current operating system is not Linux")
+
+    try:
+        return platform.freedesktop_os_release()["ID"]
+    except Exception:
+        raise RuntimeError("Cannot get distribution name")
 
 
-def load_library(lib_name: str):
+def get_supported_distribution_name() -> str:
+    if sys.platform != "linux":
+        raise RuntimeError("Current operating system is not Linux")
+
+    try:
+        info = platform.freedesktop_os_release()
+        if info["ID"] in SUPPORTED_DISTROS:
+            return info["ID"]
+        elif info["ID_LIKE"] in SUPPORTED_DISTROS:
+            return info["ID_LIKE"]
+    except AttributeError:
+        raise RuntimeError("Cannot get distribution name")
+    except KeyError:
+        raise RuntimeError(f"The distribution {info.get('ID')} is not supported")
+
+    raise RuntimeError("Cannot get distribution name")
+
+
+def load_library(lib_name: str) -> ModuleType | None:
     """Dynamically import a library by name, or return None if not found."""
     try:
         return importlib.import_module(lib_name)
@@ -72,7 +97,6 @@ class KernelToolkitApp(App):
         distro = get_distribution_name()
         yield Label(f"Detected distribution: {distro}")
 
-        # Load settings.config
         config_path = os.path.join(os.path.dirname(__file__), "settings.config")
         config = configparser.ConfigParser()
         config.read(config_path)
@@ -135,9 +159,15 @@ class KernelToolkitApp(App):
 
 
 def main():
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        print("Error: stdin and stdout must be a tty", file=sys.stderr)
+        return 1
+
     app = KernelToolkitApp()
     app.run()
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
