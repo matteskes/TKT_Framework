@@ -16,23 +16,45 @@ import importlib
 import os
 import platform
 import sys
+from typing import Final
 
 from textual.app import App, ComposeResult
 from textual.widgets import Input, Label
 
-
-# These two functions retrieve the distribution ID and any like distributions from the freedesktop.org os-release file
-# will be using these to determine the distribution for sourcing distribution-specific for libraries prebguild and postbuild
-def get_like_distro() -> list[str]:
-    info = platform.freedesktop_os_release()
-    ids = [info["ID"]]
-    if "ID_LIKE" in info:
-        ids.extend(info["ID_LIKE"].split())
-    return ids
+SUPPORTED_DISTROS: Final[list[str]] = [
+    "debian",
+    "ubuntu",
+    "fedora",
+    "arch",
+]
 
 
 def get_distribution_name() -> str:
-    return get_like_distro()[0]
+    if sys.platform != "linux":
+        raise RuntimeError("Current operating system is not Linux")
+
+    try:
+        return platform.freedesktop_os_release()["ID"]
+    except Exception:
+        raise RuntimeError("Cannot get distribution name")
+
+
+def get_supported_distribution_name() -> str:
+    if sys.platform != "linux":
+        raise RuntimeError("Current operating system is not Linux")
+
+    try:
+        info = platform.freedesktop_os_release()
+        if info["ID"] in SUPPORTED_DISTROS:
+            return info["ID"]
+        elif info["ID_LIKE"] in SUPPORTED_DISTROS:
+            return info["ID_LIKE"]
+    except AttributeError:
+        raise RuntimeError("Cannot get distribution name")
+    except KeyError:
+        raise RuntimeError(f"The distribution {info.get('ID')} is not supported")
+
+    raise RuntimeError("Cannot get distribution name")
 
 
 # Main application class for the Kernel Toolkit
