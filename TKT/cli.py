@@ -21,7 +21,7 @@ from types import ModuleType
 from typing import Final
 
 from textual.app import App, ComposeResult
-from textual.containers import Vertical
+from textual.containers import Vertical, Center
 from textual.widgets import Input, Label
 
 SUPPORTED_DISTROS: Final[list[str]] = [
@@ -85,39 +85,40 @@ def choose_backend(config: configparser.ConfigParser, config_path: str) -> str:
     return config.get("settings", "backend")
 
 
-def jls_extract_def():
-    return """
+class KernelToolkitApp(App):
+    title = "Kernel Toolkit"
+
+    # Disable auto-scroll so the UI doesn’t jump to the bottom on load
+    ENABLE_AUTO_SCROLL = False
+
+    # Styling for the welcome block and labels
+    CSS = """
         #welcome_block {
-            align: center top;
-            padding: 3;
+            align-horizontal: center;
+            align-vertical: top;
+            padding: 3 0 3 0;
         }
-    
+
         #welcome_title {
             text-style: bold;
             text-align: center;
         }
-    
+
         #welcome_subtext {
-            text-align: left;
+            text-align: center;
         }
-        """
-
-
-class KernelToolkitApp(App):
-    CSS = jls_extract_def()
-
-    title = "Kernel Toolkit"
+    """
 
     def compose(self) -> ComposeResult:
-        # --- Welcome block ---
+        # Welcome block (centered at top with spacing, styled via CSS IDs)
         with Vertical(id="welcome_block"):
-            yield Label("Welcome to The Kernel Toolkit", id="welcome_title")
-            yield Label(
+            yield Center(Label("Welcome to The Kernel Toolkit", id="welcome_title"))
+            yield Center(Label(
                 "This program will help users compile and install your custom Linux kernel.",
                 id="welcome_subtext",
-            )
+            ))
 
-        # --- Main body ---
+        # Detected distribution
         distro = get_distribution_name()
         yield Label(f"Detected distribution: {distro}")
 
