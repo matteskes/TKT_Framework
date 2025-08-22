@@ -21,6 +21,7 @@ from types import ModuleType
 from typing import Final
 
 from textual.app import App, ComposeResult
+from textual.containers import Vertical
 from textual.widgets import Input, Label
 
 SUPPORTED_DISTROS: Final[list[str]] = [
@@ -85,15 +86,34 @@ def choose_backend(config: configparser.ConfigParser, config_path: str) -> str:
 
 
 class KernelToolkitApp(App):
+    CSS = """
+    #welcome_block {
+        align: center top;
+        padding: 3;
+    }
+
+    #welcome_title {
+        text-style: bold;
+        text-align: center;
+    }
+
+    #welcome_subtext {
+        text-align: left;
+    }
+    """
+
     title = "Kernel Toolkit"
 
     def compose(self) -> ComposeResult:
-        welcome_message = (
-            "Welcome to The Kernel Toolkit. This program will help users compile "
-            "and install your custom Linux kernel."
-        )
-        yield Label(welcome_message)
+        # --- Welcome block ---
+        with Vertical(id="welcome_block"):
+            yield Label("Welcome to The Kernel Toolkit", id="welcome_title")
+            yield Label(
+                "This program will help users compile and install your custom Linux kernel.",
+                id="welcome_subtext",
+            )
 
+        # --- Main body ---
         distro = get_distribution_name()
         yield Label(f"Detected distribution: {distro}")
 
