@@ -85,22 +85,26 @@ def choose_backend(config: configparser.ConfigParser, config_path: str) -> str:
     return config.get("settings", "backend")
 
 
+def jls_extract_def():
+    return """
+        #welcome_block {
+            align: center top;
+            padding: 3;
+        }
+    
+        #welcome_title {
+            text-style: bold;
+            text-align: center;
+        }
+    
+        #welcome_subtext {
+            text-align: left;
+        }
+        """
+
+
 class KernelToolkitApp(App):
-    CSS = """
-    #welcome_block {
-        align: center top;
-        padding: 3;
-    }
-
-    #welcome_title {
-        text-style: bold;
-        text-align: center;
-    }
-
-    #welcome_subtext {
-        text-align: left;
-    }
-    """
+    CSS = jls_extract_def()
 
     title = "Kernel Toolkit"
 
