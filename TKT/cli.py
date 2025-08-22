@@ -21,8 +21,8 @@ from types import ModuleType
 from typing import Final
 
 from textual.app import App, ComposeResult
+from textual.containers import Center, Vertical
 from textual.widgets import Input, Label
-from textual.containers import Vertical, Center
 
 SUPPORTED_DISTROS: Final[list[str]] = [
     "debian",
@@ -91,7 +91,12 @@ class KernelToolkitApp(App):
     def compose(self) -> ComposeResult:
         # Welcome block (centered with title + subtext)
         with Vertical(id="welcome_block"):
-            yield Center(Label("Welcome to The Kernel Toolkit", id="welcome_title" , bold=True))
+            yield Center(
+                Label(
+                    "Welcome to The Kernel Toolkit",
+                    id="welcome_title",
+                )
+            )
             yield Center(
                 Label(
                     "This program will help users compile and install your custom Linux kernel.",
