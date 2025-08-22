@@ -21,8 +21,8 @@ from types import ModuleType
 from typing import Final
 
 from textual.app import App, ComposeResult
-from textual.widgets import Input, Label
 from textual.containers import Vertical
+from textual.widgets import Input, Label
 
 SUPPORTED_DISTROS: Final[list[str]] = [
     "debian",
@@ -88,7 +88,7 @@ def choose_backend(config: configparser.ConfigParser, config_path: str) -> str:
 class KernelToolkitApp(App):
     CSS = """
     #welcome_block {
-        align: center middle;
+        align: center top;
         padding: 3;
     }
 
@@ -98,7 +98,7 @@ class KernelToolkitApp(App):
     }
 
     #welcome_subtext {
-        text-align: center;
+        text-align: left;
     }
     """
 
@@ -110,7 +110,7 @@ class KernelToolkitApp(App):
             yield Label("Welcome to The Kernel Toolkit", id="welcome_title")
             yield Label(
                 "This program will help users compile and install your custom Linux kernel.",
-                id="welcome_subtext"
+                id="welcome_subtext",
             )
 
         # --- Main body ---
