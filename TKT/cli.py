@@ -88,15 +88,9 @@ def choose_backend(config: configparser.ConfigParser, config_path: str) -> str:
 class KernelToolkitApp(App):
     title = "Kernel Toolkit"
 
-    # Disable auto-scroll so the UI doesn’t jump to the bottom on load
-    ENABLE_AUTO_SCROLL = False
-
-    # Styling for the welcome block and labels
     CSS = """
         #welcome_block {
-            align-horizontal: center;
-            align-vertical: top;
-            padding: 3 0 3 0;
+            padding: 2 0 2 0;   /* Top and bottom spacing reduced by 1 */
         }
 
         #welcome_title {
@@ -107,20 +101,31 @@ class KernelToolkitApp(App):
         #welcome_subtext {
             text-align: center;
         }
+
+        #section_block {
+            padding: 2 0 3 0;   /* Keep section spacing clean */
+        }
+
+        #kernels_block {
+            padding: 2 0 3 0;   /* Keep kernel spacing clean */
+        }
     """
 
     def compose(self) -> ComposeResult:
-        # Welcome block (centered at top with spacing, styled via CSS IDs)
+        # Welcome block (centered, bold title, plain subtext, 2 lines of padding around)
         with Vertical(id="welcome_block"):
             yield Center(Label("Welcome to The Kernel Toolkit", id="welcome_title"))
-            yield Center(Label(
-                "This program will help users compile and install your custom Linux kernel.",
-                id="welcome_subtext",
-            ))
+            yield Center(
+                Label(
+                    "This program will help users compile and install your custom Linux kernel.",
+                    id="welcome_subtext",
+                )
+            )
 
         # Detected distribution
         distro = get_distribution_name()
-        yield Label(f"Detected distribution: {distro}")
+        with Vertical(id="section_block"):
+            yield Label(f"Detected distribution: {distro}")
 
         config_path = os.path.join(os.path.dirname(__file__), "settings.config")
         config = configparser.ConfigParser()
@@ -143,9 +148,10 @@ class KernelToolkitApp(App):
         except (configparser.NoSectionError, configparser.NoOptionError):
             yield Label("No available kernels found in settings.config")
         else:
-            yield Label("Available kernels to build:")
-            for kernel in kernels:
-                yield Label(f"- {kernel}")
+            with Vertical(id="kernels_block"):
+                yield Label("Available kernels to build:")
+                for kernel in kernels:
+                    yield Label(f"- {kernel}")
 
         # Always create the input field, disable it if no kernels found
         yield Label("Please enter the kernel version you want to build:")
@@ -181,18 +187,3 @@ class KernelToolkitApp(App):
         input_widget = self.query_one("#kernel_version_input", Input)
         if not input_widget.disabled:
             input_widget.focus()
-
-
-def main():
-    if not sys.stdin.isatty() or not sys.stdout.isatty():
-        print("Error: stdin and stdout must be a tty", file=sys.stderr)
-        return 1
-
-    app = KernelToolkitApp()
-    app.run()
-
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
