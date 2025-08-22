@@ -21,8 +21,8 @@ from types import ModuleType
 from typing import Final
 
 from textual.app import App, ComposeResult
-from textual.containers import Center, Vertical
 from textual.widgets import Input, Label
+from textual.containers import Vertical
 
 SUPPORTED_DISTROS: Final[list[str]] = [
     "debian",
@@ -86,24 +86,34 @@ def choose_backend(config: configparser.ConfigParser, config_path: str) -> str:
 
 
 class KernelToolkitApp(App):
+    CSS = """
+    #welcome_block {
+        align: center middle;
+        padding: 3;
+    }
+
+    #welcome_title {
+        text-style: bold;
+        text-align: center;
+    }
+
+    #welcome_subtext {
+        text-align: center;
+    }
+    """
+
     title = "Kernel Toolkit"
 
     def compose(self) -> ComposeResult:
-        # --- Welcome Block (centered at top, bold title, plain subtext, 3 lines padding) ---
-        yield Center(
-            Vertical(
-                Label("[b]Welcome to The Kernel Toolkit[/b]", id="welcome_title"),
-                Label(
-                    "This program will help users compile and install your custom Linux kernel.",
-                    id="welcome_subtext",
-                ),
-                Label(""),  # 1st padding line
-                Label(""),  # 2nd padding line
-                Label(""),  # 3rd padding line
+        # --- Welcome block ---
+        with Vertical(id="welcome_block"):
+            yield Label("Welcome to The Kernel Toolkit", id="welcome_title")
+            yield Label(
+                "This program will help users compile and install your custom Linux kernel.",
+                id="welcome_subtext"
             )
-        )
 
-        # --- Left-aligned section (all subsequent content) ---
+        # --- Main body ---
         distro = get_distribution_name()
         yield Label(f"Detected distribution: {distro}")
 
@@ -130,7 +140,7 @@ class KernelToolkitApp(App):
         else:
             yield Label("Available kernels to build:")
             for kernel in kernels:
-                yield Label(f"- {kernel}")  # bullet-style, plain text
+                yield Label(f"- {kernel}")
 
         # Always create the input field, disable it if no kernels found
         yield Label("Please enter the kernel version you want to build:")
