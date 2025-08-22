@@ -1,4 +1,5 @@
-TKT = TKT
+TKT      = TKT
+TEST_DIR = tests
 
 PYTHON = python3
 VENV   = .venv
@@ -34,17 +35,17 @@ coverage: $(VENV)
 	$(MAKE) test PYTEST_FLAGS="$$FLAGS" 2> /dev/null
 
 typecheck: $(VENV)
-	$(MYPY) $(TKT)
+	$(MYPY) $(TKT) $(TEST_DIR)
 
 lint: $(VENV)
-	$(RUFF) check $(TKT)
+	$(RUFF) check $(TKT) $(TEST_DIR)
 
 format: $(VENV)
-	$(BLACK) $(TKT)
-	$(ISORT) $(TKT)
+	$(BLACK) $(TKT) $(TEST_DIR)
+	$(ISORT) $(TKT) $(TEST_DIR)
 
 force-fix: $(VENV)
-	$(RUFF) check --fix --unsafe-fixes $(TKT)
+	$(RUFF) check --fix --unsafe-fixes $(TKT) $(TEST_DIR)
 
 check: format typecheck lint
 
