@@ -21,8 +21,8 @@ from types import ModuleType
 from typing import Final
 
 from textual.app import App, ComposeResult
+from textual.containers import Center, Vertical
 from textual.widgets import Input, Label
-from textual.containers import Vertical
 
 SUPPORTED_DISTROS: Final[list[str]] = [
     "debian",
@@ -33,7 +33,6 @@ SUPPORTED_DISTROS: Final[list[str]] = [
 
 
 def get_distribution_name() -> str:
-    """Return the Linux distribution name using freedesktop_os_release()."""
     if sys.platform != "linux":
         raise RuntimeError("Current operating system is not Linux")
 
@@ -44,7 +43,6 @@ def get_distribution_name() -> str:
 
 
 def get_supported_distribution_name() -> str:
-    """Return supported distribution name or raise if unsupported."""
     if sys.platform != "linux":
         raise RuntimeError("Current operating system is not Linux")
 
@@ -88,62 +86,27 @@ def choose_backend(config: configparser.ConfigParser, config_path: str) -> str:
 
 
 class KernelToolkitApp(App):
-    """Textual-based UI application for the Kernel Toolkit."""
-
     title = "Kernel Toolkit"
 
-    # CSS styling for consistent margins, padding, and nested items
-    CSS = """
-    #welcome_block {
-        width: 100%;
-        align: center top;
-        padding-bottom: 3;
-    }
-
-    .left-section {
-        margin-left: 2;
-    }
-
-    .nested-item {
-        margin-left: 4;
-    }
-
-    #kernels_title {
-        padding-top: 1;
-        text-style: bold;
-    }
-
-    #distro {
-        padding-top: 1;
-    }
-
-    #backend_status {
-        padding-top: 1;
-    }
-
-    #kernel_version_input {
-        padding-top: 1;
-    }
-    """
-
     def compose(self) -> ComposeResult:
-        """Build and yield the application layout."""
-
-        # Welcome block (centered header with subtitle)
-        yield Vertical(
-            Label("Welcome to The Kernel Toolkit", id="welcome_title", classes="bold"),
-            Label(
-                "This program will help users compile and install your custom Linux kernel.",
-                id="welcome_subtitle",
-            ),
-            id="welcome_block",
+        # --- Welcome Block (centered at top, bold title, plain subtext, 3 lines padding) ---
+        yield Center(
+            Vertical(
+                Label("[b]Welcome to The Kernel Toolkit[/b]", id="welcome_title"),
+                Label(
+                    "This program will help users compile and install your custom Linux kernel.",
+                    id="welcome_subtext",
+                ),
+                Label(""),  # 1st padding line
+                Label(""),  # 2nd padding line
+                Label(""),  # 3rd padding line
+            )
         )
 
-        # Distro detection
+        # --- Left-aligned section (all subsequent content) ---
         distro = get_distribution_name()
-        yield Label(f"Detected distribution: {distro}", id="distro", classes="left-section")
+        yield Label(f"Detected distribution: {distro}")
 
-        # Load settings.config
         config_path = os.path.join(os.path.dirname(__file__), "settings.config")
         config = configparser.ConfigParser()
         config.read(config_path)
@@ -153,9 +116,9 @@ class KernelToolkitApp(App):
         lib_module = load_library(backend)
 
         if lib_module:
-            yield Label(f"Loaded library for {backend}", id="backend_status", classes="left-section")
+            yield Label(f"Loaded library for {backend}")
         else:
-            yield Label(f"No library found for '{backend}'", id="backend_status", classes="left-section")
+            yield Label(f"No library found for '{backend}'")
 
         # Read available kernels from settings.config
         kernels = []
@@ -163,14 +126,14 @@ class KernelToolkitApp(App):
             available_kernels_str = config.get("kernels", "available")
             kernels = [k.strip() for k in available_kernels_str.split(",")]
         except (configparser.NoSectionError, configparser.NoOptionError):
-            yield Label("No available kernels found in settings.config", classes="left-section")
+            yield Label("No available kernels found in settings.config")
         else:
-            yield Label("Available kernels to build:", id="kernels_title", classes="left-section")
+            yield Label("Available kernels to build:")
             for kernel in kernels:
-                yield Label(f"• {kernel}", classes="nested-item")
+                yield Label(f"- {kernel}")  # bullet-style, plain text
 
         # Always create the input field, disable it if no kernels found
-        yield Label("Please enter the kernel version you want to build:", classes="left-section")
+        yield Label("Please enter the kernel version you want to build:")
         yield Input(
             placeholder=(
                 "Enter the kernel version to build"
@@ -180,11 +143,9 @@ class KernelToolkitApp(App):
             id="kernel_version_input",
             name="kernel_version_input",
             disabled=not kernels,
-            classes="left-section",
         )
 
     def on_input_submitted(self, event) -> None:
-        """Handle kernel version input submission events."""
         kernel_version = event.input.value.strip()
         if not kernel_version:
             self.query_one("#kernel_version_input", Input).placeholder = (
@@ -201,14 +162,13 @@ class KernelToolkitApp(App):
         )
 
     def on_mount(self) -> None:
-        """Focus the input field if kernels are available."""
+        # Focus the input if it’s enabled
         input_widget = self.query_one("#kernel_version_input", Input)
         if not input_widget.disabled:
             input_widget.focus()
 
 
 def main():
-    """Main entry point for launching the TUI."""
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         print("Error: stdin and stdout must be a tty", file=sys.stderr)
         return 1
