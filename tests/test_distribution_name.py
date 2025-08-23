@@ -118,3 +118,13 @@ class TestGetSupportedDistributionName:
         mocker.patch.object(sys, "platform", "win32")
         with pytest.raises(RuntimeError, match="not Linux"):
             get_supported_distribution_name()
+
+    def test_unsupported_base_distro(self, distro, mocker):
+        new_distro = {"ID": "smilodon", "ID_LIKE": "tiger"}
+
+        mocker.patch.object(
+            platform, "freedesktop_os_release", return_value=new_distro
+        )
+
+        with pytest.raises(RuntimeError, match="Cannot get distribution name"):
+            get_supported_distribution_name()
