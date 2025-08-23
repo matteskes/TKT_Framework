@@ -30,6 +30,12 @@ include = ["pyproject.toml", "TKT/**/*.py"]
 select = ["E", "F", "I"]  # errors, formatting, imports
 ignore = ["E501", "F841"]
 
+[tool.coverage.run]
+omit = [
+    "__init__.py",
+    "__main__.py",
+]
+
 [project]
 name = "the-kernel-toolkit"
 version = "0.1.0"
