@@ -154,22 +154,18 @@ class KernelToolkitApp(App):
 
     def on_input_submitted(self, event) -> None:
         kernel_version = event.input.value.strip()
+        input_widget = self.query_one("#kernel_version_input", Input)
+
         if not kernel_version:
-            self.query_one("#kernel_version_input", Input).placeholder = (
-                "Please enter a valid kernel version."
-            )
+            input_widget.placeholder = "Please enter a valid kernel version."
             return
 
-        # Mock build feedback
-        self.query_one("#kernel_version_input", Input).placeholder = (
-            f"Selecting kernel version {kernel_version}..."
-        )
-        self.query_one("#kernel_version_input", Input).placeholder = (
-            f"Kernel version {kernel_version} Selected."
-        )
+        # Mock build feedback - use a single placeholder update
+        input_widget.placeholder = f"Kernel version {kernel_version} selected."
+        input_widget.value = ""  # Clear the input
 
     def on_mount(self) -> None:
-        # Focus the input if it’s enabled
+        # Focus the input if it's enabled
         input_widget = self.query_one("#kernel_version_input", Input)
         if not input_widget.disabled:
             input_widget.focus()
