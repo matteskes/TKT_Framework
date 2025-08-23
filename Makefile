@@ -31,8 +31,8 @@ test: $(VENV)
 	$(PYTEST) $(PYTEST_FLAGS) $(PYTEST_FILES)
 
 coverage: $(VENV)
-	FLAGS="--cov=$(COVERAGE_DIR) --cov-report=term-missing"; \
-	$(MAKE) test PYTEST_FLAGS="$$FLAGS" 2> /dev/null
+	FLAGS="--cov=$(COVERAGE_DIR) --cov-report=term-missing --verbosity=-1"; \
+	$(MAKE) --no-print-directory test PYTEST_FLAGS="$$FLAGS"
 
 typecheck: $(VENV)
 	$(MYPY) $(TKT) $(TEST_DIR)
