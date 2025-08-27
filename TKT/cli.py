@@ -31,6 +31,7 @@ SUPPORTED_DISTROS: Final[list[str]] = [
     "arch",
 ]
 
+
 # Get distribution name using platform module
 def get_distribution_name() -> str:
     if sys.platform != "linux":
@@ -40,6 +41,7 @@ def get_distribution_name() -> str:
         return platform.freedesktop_os_release()["ID"]
     except Exception:
         raise RuntimeError("Cannot get distribution name")
+
 
 # Get supported distribution name or raise error if not supported
 def get_supported_distribution_name() -> str:
@@ -59,6 +61,7 @@ def get_supported_distribution_name() -> str:
 
     raise RuntimeError("Cannot get distribution name")
 
+
 # Dynamically load the distribution-specific library
 def load_library(lib_name: str) -> ModuleType | None:
     """Dynamically import a library by name, or return None if not found."""
@@ -67,33 +70,35 @@ def load_library(lib_name: str) -> ModuleType | None:
     except ImportError:
         return None
 
+
 # Ensure backend is set in config, defaulting to distro-specific if missing
 def choose_backend(config: configparser.ConfigParser, config_path: str) -> str:
     """Ensure [settings] backend exists in config, defaulting to distro."""
     if not config.has_section("settings"):
         config.add_section("settings")
 
-# Add default backend if missing
+    # Add default backend if missing
     if not config.has_option("settings", "backend"):
         distro = get_distribution_name()
         default_backend = f"kernel_lib_{distro}"
         config.set("settings", "backend", default_backend)
 
-# Persist the setting back to settings.config
+        # Persist the setting back to settings.config
         with open(config_path, "w") as f:
             config.write(f)
 
-# Return the backend value
+    # Return the backend value
     return config.get("settings", "backend")
+
 
 # Main application class using Textual
 class KernelToolkitApp(App):
     title = "Kernel Toolkit"
 
-# CSS path for styling
+    # CSS path for styling
     def compose(self) -> ComposeResult:
 
-# Welcome block (centered with title + subtext)
+        # Welcome block (centered with title + subtext)
         with Vertical(id="welcome_block"):
             yield Center(
                 Label(
@@ -108,17 +113,17 @@ class KernelToolkitApp(App):
                 )
             )
 
-# Distribution block
+        # Distribution block
         distro = get_distribution_name()
         with Vertical(id="distro_block"):
             yield Label(f"Detected distribution: {distro}")
 
-# Backend / library resolution block
+        # Backend / library resolution block
         config_path = os.path.join(os.path.dirname(__file__), "settings.config")
         config = configparser.ConfigParser()
         config.read(config_path)
 
-# Always resolve backend from settings.config (auto-populate if missing)
+        # Always resolve backend from settings.config (auto-populate if missing)
         backend = choose_backend(config, config_path)
         lib_module = load_library(backend)
 
@@ -128,7 +133,7 @@ class KernelToolkitApp(App):
             else:
                 yield Label(f"No library found for '{backend}'")
 
-# Kernel list block
+        # Kernel list block
         kernels = []
         try:
             available_kernels_str = config.get("kernels", "available")
@@ -142,7 +147,7 @@ class KernelToolkitApp(App):
                 for kernel in kernels:
                     yield Label(f"- {kernel}")
 
-# Input block (always shown, disabled if no kernels available)
+        # Input block (always shown, disabled if no kernels available)
         with Vertical(id="input_block"):
             yield Label("Please enter the kernel version you want to build:")
             yield Input(
@@ -156,27 +161,28 @@ class KernelToolkitApp(App):
                 disabled=not kernels,
             )
 
-# Handle input submission
+    # Handle input submission
     def on_input_submitted(self, event) -> None:
         kernel_version = event.input.value.strip()
         input_widget = self.query_one("#kernel_version_input", Input)
 
-# Validate input
+        # Validate input
         if not kernel_version:
             input_widget.placeholder = "Please enter a valid kernel version."
             return
 
-# Mock build feedback - use a single placeholder update
+        # Mock build feedback - use a single placeholder update
         input_widget.placeholder = f"Kernel version {kernel_version} selected."
         input_widget.value = ""  # Clear the input
 
-# Focus input again
+    # Focus input again
     def on_mount(self) -> None:
 
-# Focus the input if it's enabled
+        # Focus the input if it's enabled
         input_widget = self.query_one("#kernel_version_input", Input)
         if not input_widget.disabled:
             input_widget.focus()
+
 
 # Main function to run the app
 def main():
