@@ -274,7 +274,7 @@ TKT creates log files in `~/.local/share/tkt/logs/` for debugging purposes.
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guidelines](docs/CONTRIBUTING.md) for details.
 
 ### Areas for Contribution
 - Complete Fedora support implementation
