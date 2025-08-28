@@ -1,5 +1,6 @@
 # runtime dependencies
 textual
+tomlkit>=0.12.0
 
 # dev dependencies
 mypy
@@ -9,3 +10,6 @@ pytest-mock
 black
 isort
 ruff
+
+# Python < 3.11 compatibility for tomllib
+tomli>=2.0.0; python_version < "3.11"

@@ -1,0 +1,7 @@
+# TKT Framework Configuration
+
+[kernels]
+available = ["6.16"]
+
+[settings]
+backend = "kernel_lib_arch"
