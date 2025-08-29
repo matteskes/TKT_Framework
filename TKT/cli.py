@@ -121,6 +121,9 @@ class TKTSystemManager:
             self.distro_config = get_distro_configs(self.distro)
             self.distro_supported = True
         except (ValueError, RuntimeError):
+            # Reset all attributes when distribution is not supported
+            self.distro = None
+            self.distro_config = None
             self.distro_supported = False
 
     def install_dependencies(self) -> tuple[bool, str]:
