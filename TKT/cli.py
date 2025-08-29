@@ -237,7 +237,7 @@ class KernelToolkitApp(App):
                 )
             )
 
-        # Distribution block - ENHANCED
+        # Distribution block
         with Vertical(id="distro_block"):
             if self.system_manager.distro:
                 yield Label(f"Detected distribution: {self.system_manager.distro}")
