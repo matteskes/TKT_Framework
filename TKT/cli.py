@@ -5,7 +5,7 @@ Created on 2025-08-14
 @author: The Kernel Toolkit Project and contributors- (C) 2025.
 All respective rights reserved.
 @license: GNU General Public License v2-only (GPLv2)
-@version: 0.1.0
+@version: 0.3.0
 @project: TKT Framework Project
 @title: TKT Python Application
 @contact: https://github.com/matteskes/TKT_Framework
