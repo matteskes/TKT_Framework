@@ -456,7 +456,7 @@ class NewDistroConfigs(DistroConfigs):
 
 ### Compatibility
 
-- **Python versions**: Support Python 3.10+
+- **Python versions**: Support Python 3.11+
 - **Distribution compatibility**: Test on target distributions
 - **Dependency versions**: Use compatible version ranges
 - **Backward compatibility**: Avoid breaking changes when possible
