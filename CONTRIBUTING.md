@@ -313,16 +313,16 @@ def test_full_dependency_installation_flow():
 
 ```bash
 # Run all tests
-pytest
+make check
 
 # Run with coverage
-pytest --cov=TKT --cov-report=html
+make coverage
 
 # Run specific tests
-pytest tests/test_cli.py::TestTKTSystemManager::test_install_dependencies_success
+make $test_name (lint, format, typecheck)
 
 # Run integration tests only
-pytest tests/integration/
+make test
 ```
 
 ## Documentation
