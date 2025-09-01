@@ -1,7 +1,7 @@
 # The Kernel Toolkit (TKT)
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Platform: Linux](https://img.shields.io/badge/platform-Linux-green.svg)](https://www.kernel.org/)
 
 A modern, user-friendly terminal application for compiling and managing custom Linux kernels across multiple distributions.
@@ -16,7 +16,7 @@ A modern, user-friendly terminal application for compiling and managing custom L
 
 ## Requirements
 
-* **Python 3.10+** (installed system-wide)
+* **Python 3.11+** (installed system-wide)
 * **Make** (standard on most Unix-like systems)
 * Linux operating system (supported: Arch, Debian, Ubuntu, Fedora)
 * Terminal with TTY support
@@ -117,10 +117,10 @@ python -m TKT
 
 | Distribution | Package Manager | Status |
 |-------------|----------------|--------|
-| Arch Linux | pacman/makepkg | Partially Supported |
-| Debian | apt-get | Partially Supported |
-| Ubuntu | apt-get | Partially Supported |
-| Fedora | dnf | ⚠️ Planned |
+| Arch Linux | pacman/makepkg | Supported |
+| Debian | apt-get | Supported |
+| Ubuntu | apt-get | Supported |
+| Fedora | dnf |  Planned |
 
 ## Configuration
 
