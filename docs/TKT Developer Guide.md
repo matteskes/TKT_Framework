@@ -1,417 +1,511 @@
-# TKT Developer Guide
-
-This guide is for developers who want to contribute to The Kernel Toolkit (TKT) project or understand its internal architecture.
+# TKT Developer Documentation Guide
 
 ## Table of Contents
 
-- [Development Environment Setup](#development-environment-setup)
-- [Project Architecture](#project-architecture)
-- [Code Style and Standards](#code-style-and-standards)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [Adding New Features](#adding-new-features)
-- [Distribution Support](#distribution-support)
-- [Release Process](#release-process)
+1. [Project Overview](#project-overview)
+2. [Architecture](#architecture)
+3. [Development Environment](#development-environment)
+4. [Code Standards & Quality](#code-standards--quality)
+5. [Testing Strategy](#testing-strategy)
+6. [Build System](#build-system)
+7. [Distribution Support](#distribution-support)
+8. [Contributing Workflow](#contributing-workflow)
+9. [Release Process](#release-process)
+10. [Debugging & Troubleshooting](#debugging--troubleshooting)
 
-## Development Environment Setup
+## Project Overview
 
-### Prerequisites
+The Kernel Toolkit (TKT) is a modern, cross-distribution Linux kernel compilation tool built with Python 3.11+. The project emphasizes:
 
-- **Python 3.10+** with pip
-- **Git** for version control
-- **Linux system** for testing (or VM)
-- **Text editor/IDE** with Python support
+- **User Experience**: Clean terminal UI with Textual framework
+- **Cross-Platform**: Multi-distribution support with pluggable backends
+- **Modern Python**: Type hints, async patterns, and modern tooling
+- **Quality Assurance**: Comprehensive testing and automated checks
 
-### Setting Up the Environment
+### Key Technologies
 
-1. **Fork and clone the repository:**
-```bash
-git clone https://github.com/yourusername/TKT_Framework.git
-cd TKT_Framework
-```
+- **UI Framework**: Textual (terminal-based UI)
+- **Configuration**: TOML with tomlkit
+- **Build System**: Make with virtual environment management
+- **Quality Tools**: Black, Ruff, MyPy, pytest
+- **CI/CD**: GitHub Actions for automated testing
 
-2. **Create virtual environment:**
-```bash
-python -m venv tkt-dev
-source tkt-dev/bin/activate  # Windows: tkt-dev\Scripts\activate
-```
-
-3. **Install development dependencies:**
-```bash
-# Runtime dependencies
-pip install textual tomlkit
-
-# Development dependencies  
-pip install pytest pytest-cov black flake8 mypy pre-commit
-pip install -e .
-```
-
-4. **Set up pre-commit hooks:**
-```bash
-pre-commit install
-```
-
-5. **Verify setup:**
-```bash
-python -m TKT  # Should launch the application
-pytest         # Should run tests (if any exist)
-```
-
-## Project Architecture
-
-### Overview
-
-TKT follows a modular architecture with clear separation of concerns:
-
-```
-TKT/
-├── __init__.py          # Package metadata and version
-├── __main__.py          # Entry point and argument parsing  
-├── cli.py              # Main application logic and UI
-├── distro_configs.py   # Distribution-specific configurations
-└── settings.toml       # Runtime configuration
-```
+## Architecture
 
 ### Core Components
 
-#### 1. Application Layer (`cli.py`)
+```
+TKT/
+├── __init__.py          # Package initialization
+├── __main__.py          # CLI entry point
+├── cli.py              # Main application logic & UI
+├── distro_configs.py   # Distribution-specific backends
+└── settings.toml       # Runtime configuration
+```
 
-**`KernelToolkitApp`**: Main Textual application
-- Handles UI rendering and user interaction
-- Manages application state and configuration
-- Coordinates between system manager and UI components
+### Component Responsibilities
 
-**`TKTSystemManager`**: System operations manager
-- Abstracts system-level operations
-- Handles distribution detection and validation
-- Manages dependency installation and kernel operations
+#### `cli.py` - Application Core
+- **TKTSystemManager**: System operations and dependency management
+- **KernelToolkitApp**: Textual UI application
+- **Distribution Detection**: Auto-detect Linux distribution
+- **Command Routing**: Handle user input and commands
 
-#### 2. Distribution Layer (`distro_configs.py`)
+#### `distro_configs.py` - Backend System
+- **DistroConfigs**: Abstract base class for package management
+- **Distribution Classes**: Concrete implementations (Arch, Debian, Ubuntu, Fedora)
+- **Package Management**: Repository updates and dependency installation
 
-**`DistroConfigs`**: Abstract base class
-- Defines common interface for package management
-- Provides extensible architecture for new distributions
-- Handles base dependency definitions
-
-**Concrete implementations**: `ArchConfigs`, `DebianConfigs`, `UbuntuConfigs`
-- Distribution-specific package management logic
-- Custom dependency lists and installation procedures
-- Error handling for platform-specific issues
-
-#### 3. Configuration Layer
-
-**TOML configuration**: `settings.toml`
-- User-configurable kernel versions and settings
-- Backend selection and validation
-- Persistent storage for user preferences
+#### Configuration System
+- **settings.toml**: Available kernel versions and backend selection
+- **TOML Loading**: Dynamic configuration with fallback defaults
 
 ### Design Patterns
 
-#### Factory Pattern
+#### Plugin Architecture
+Distribution support uses a factory pattern:
+
 ```python
-def get_distro_configs(name: str) -> DistroConfigs:
-    """Factory function for distribution configurations."""
-    match name.lower():
-        case "arch": return ArchConfigs()
-        case "debian": return DebianConfigs()
-        # ...
+def get_distro_configs(distro_name: str) -> DistroConfigs:
+    """Factory function returning appropriate config class."""
+    configs = {
+        'arch': ArchConfigs,
+        'debian': DebianConfigs,
+        'ubuntu': UbuntuConfigs,
+        # ... extensible for new distributions
+    }
+    return configs[distro_name]()
 ```
 
-#### Strategy Pattern
+#### Command Pattern
+User commands are processed through a centralized handler:
+
 ```python
-class TKTSystemManager:
-    def __init__(self):
-        self.distro_config = get_distro_configs(self.distro)
-        
-    def install_dependencies(self):
-        return self.distro_config.update_and_install()
+async def handle_command(self, command: str) -> None:
+    """Process user commands with validation and error handling."""
+    if command in ['deps', 'install-deps']:
+        await self.install_dependencies()
+    elif self.is_kernel_version(command):
+        await self.select_kernel(command)
+    # ... extensible command system
 ```
 
-#### Template Method Pattern
-```python
-class DistroConfigs(ABC):
-    def update_and_install(self):
-        """Template method - can be overridden."""
-        self.update_repos()      # Abstract method
-        self.install_packages()  # Abstract method
+## Development Environment
+
+### Prerequisites
+
+- **Python 3.11+** (system-wide installation)
+- **Make** (for build automation)
+- **Git** (version control)
+- **Linux System** (for testing distribution-specific features)
+
+### Environment Setup
+
+```bash
+# 1. Clone repository
+git clone https://github.com/matteskes/TKT_Framework.git
+cd TKT_Framework
+
+# 2. Create virtual environment and install dependencies
+make install
+
+# 3. Verify setup
+make check  # Run all quality checks
+make test   # Run test suite
+make run    # Launch application
 ```
 
-### Data Flow
+### Virtual Environment Management
 
-1. **Application startup**: Detect distribution → Load configuration → Initialize UI
-2. **User input**: UI → Command parsing → System manager → Distribution config
-3. **System operations**: Distribution config → Subprocess calls → Status updates → UI
+The project uses a local `.venv/` directory:
 
-## Code Style and Standards
+```makefile
+# Virtual environment is created automatically
+.venv/:
+    python -m venv .venv
+    .venv/bin/pip install -r requirements.txt
+```
+
+### Development Dependencies
+
+```
+# Runtime Dependencies
+textual           # Terminal UI framework
+tomlkit>=0.12.0  # TOML configuration handling
+
+# Development Dependencies  
+mypy             # Static type checking
+pytest           # Testing framework
+pytest-cov      # Coverage reporting
+pytest-mock     # Mocking utilities
+black           # Code formatting
+isort           # Import sorting
+ruff            # Fast Python linter
+
+# Compatibility
+tomli>=2.0.0    # Python <3.11 compatibility
+```
+
+## Code Standards & Quality
 
 ### Python Style Guide
 
-TKT follows PEP 8 with some specific conventions:
-
-#### Import Organization
-```python
-# Standard library imports
-import os
-import sys
-from typing import Dict, List, Any
-
-# Third-party imports
-import tomlkit
-from textual.app import App
-
-# Local imports
-from TKT.distro_configs import get_distro_configs
+**Formatting**: Black with 88-character line length
+```toml
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+skip-string-normalization = false
 ```
 
-#### Type Hints
-All public functions must include type hints:
-```python
-def get_distribution_name() -> str:
-    """Returns the distribution name."""
-    
-def choose_backend(config: Dict[str, Any], config_path: str) -> tuple[str, bool]:
-    """Returns backend name and support status."""
+**Import Sorting**: isort with Black compatibility
+```toml
+[tool.isort]
+profile = "black"
+line_length = 88
 ```
 
-#### Docstrings
-Use Google-style docstrings:
+**Linting**: Ruff with automatic fixes
+```toml
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+fix = true
+select = ["E", "F", "I"]  # errors, formatting, imports
+```
+
+### Type Annotations
+
+**Required for all public APIs**:
+
 ```python
 def install_dependencies(self) -> tuple[bool, str]:
     """
     Install required packages for kernel compilation.
-
+    
     Returns:
-        tuple[bool, str]: (success, message)
-        
-    Raises:
-        RuntimeError: If distribution is not supported.
+        tuple[bool, str]: Success status and descriptive message
     """
 ```
 
-#### Error Handling
-Prefer specific exceptions with descriptive messages:
+### Documentation Standards
+
+**Google-style docstrings**:
+
 ```python
-# Good
-if not self.distro_supported:
-    raise RuntimeError("Distribution not supported for automatic dependency installation")
+def get_distro_configs(distro_name: str) -> DistroConfigs:
+    """
+    Factory function to get distribution-specific configuration.
 
-# Avoid
-if not self.distro_supported:
-    raise Exception("Error")
-```
+    Args:
+        distro_name: Name of the Linux distribution (e.g., 'arch', 'debian')
 
-### Code Formatting
+    Returns:
+        DistroConfigs: Configuration object for the specified distribution
 
-#### Black Configuration
-Create `.pyproject.toml`:
-```toml
-[tool.black]
-line-length = 88
-target-version = ['py310']
-include = '\.pyi?
-extend-exclude = '''
-/(
-  # Exclude specific directories
-  build/
-  | dist/
-)/
-'''
-```
-
-#### Flake8 Configuration
-Create `.flake8`:
-```ini
-[flake8]
-max-line-length = 88
-extend-ignore = E203, W503
-exclude = 
-    .git,
-    __pycache__,
-    build,
-    dist
-```
-
-### Pre-commit Configuration
-
-Create `.pre-commit-config.yaml`:
-```yaml
-repos:
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
-    hooks:
-      - id: black
-        language_version: python3
+    Raises:
+        ValueError: If distribution is not supported
         
-  - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
-    hooks:
-      - id: flake8
-      
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.950
-    hooks:
-      - id: mypy
-        additional_dependencies: [types-all]
+    Example:
+        >>> config = get_distro_configs('arch')
+        >>> success, msg = config.install_packages()
+    """
 ```
 
-## Testing
+### Error Handling Patterns
 
-### Testing Framework
+**Structured error handling**:
 
-TKT uses pytest for testing with the following structure:
+```python
+# Good: Specific exceptions with context
+try:
+    config = get_distro_configs(distro_name)
+    success, message = config.install_packages()
+except ValueError as e:
+    logger.error(f"Unsupported distribution: {distro_name}")
+    return False, f"Distribution '{distro_name}' not supported"
+except subprocess.CalledProcessError as e:
+    logger.error(f"Package installation failed: {e}")
+    return False, f"Failed to install packages: {e.stderr}"
+
+# Avoid: Generic exception handling
+try:
+    # operations
+except Exception:
+    return False, "Something went wrong"
+```
+
+## Testing Strategy
+
+### Test Structure
 
 ```
 tests/
-├── __init__.py
-├── conftest.py              # Shared fixtures
-├── test_cli.py             # CLI module tests
-├── test_distro_configs.py  # Distribution config tests
-├── integration/            # Integration tests
-│   ├── test_full_flow.py
-│   └── test_ui_interaction.py
-└── fixtures/               # Test data
-    ├── sample_configs/
-    └── mock_responses/
+├── unit/              # Unit tests for individual components
+├── integration/       # Integration tests for workflows
+├── fixtures/          # Test data and mocks
+└── conftest.py       # Pytest configuration
 ```
 
-### Writing Tests
+### Testing Patterns
 
-#### Unit Tests
+**Unit Testing Example**:
+
 ```python
 import pytest
 from unittest.mock import patch, MagicMock
-from TKT.cli import TKTSystemManager, get_distribution_name
+from TKT.cli import TKTSystemManager
 
 class TestTKTSystemManager:
-    def test_init_supported_distro(self):
-        """Test initialization with supported distribution."""
-        with patch('TKT.cli.get_distribution_name', return_value='ubuntu'):
-            manager = TKTSystemManager()
-            assert manager.distro == 'ubuntu'
-            assert manager.distro_supported is True
-
     def test_install_dependencies_success(self):
         """Test successful dependency installation."""
         manager = TKTSystemManager()
         manager.distro_supported = True
         manager.distro_config = MagicMock()
-        manager.distro_config.update_and_install.return_value = None
+        manager.distro_config.install_packages.return_value = (True, "Success")
         
         success, message = manager.install_dependencies()
+        
         assert success is True
-        assert "successfully" in message.lower()
+        assert "success" in message.lower()
+        manager.distro_config.install_packages.assert_called_once()
 
-    def test_install_dependencies_unsupported_distro(self):
-        """Test dependency installation on unsupported distribution."""
+    @patch('TKT.cli.get_distribution_name')
+    def test_unsupported_distribution_handling(self, mock_get_distro):
+        """Test graceful handling of unsupported distributions."""
+        mock_get_distro.side_effect = ValueError("Unsupported distro")
+        
         manager = TKTSystemManager()
-        manager.distro_supported = False
-        
-        success, message = manager.install_dependencies()
-        assert success is False
-        assert "not supported" in message.lower()
+        assert not manager.distro_supported
 ```
 
-#### Integration Tests
+**Integration Testing Example**:
+
 ```python
-import tempfile
-import os
-from TKT.cli import KernelToolkitApp
-
-class TestApplicationIntegration:
-    def test_config_creation_and_loading(self):
-        """Test configuration file creation and loading."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = os.path.join(tmpdir, "settings.toml")
-            
-            # Initialize app (should create default config)
-            app = KernelToolkitApp()
-            app.config_path = config_path
-            config = app._load_config()
-            
-            assert "kernels" in config
-            assert "settings" in config
-            assert os.path.exists(config_path)
-```
-
-#### Mock Testing for UI
-```python
-from textual.testing import AppTester
-from TKT.cli import KernelToolkitApp
-
-def test_dependency_installation_ui():
-    """Test dependency installation through UI."""
-    app = KernelToolkitApp()
+@patch('subprocess.run')
+def test_complete_dependency_installation(mock_subprocess):
+    """Test full dependency installation workflow."""
+    # Mock successful subprocess calls
+    mock_subprocess.return_value.returncode = 0
     
-    with AppTester(app) as pilot:
-        # Simulate Ctrl+D keypress
-        pilot.press("ctrl+d")
-        
-        # Check status update
-        status_label = app.query_one("#status_label")
-        assert "Installing dependencies" in status_label.renderable
+    manager = TKTSystemManager()
+    success, message = manager.install_dependencies()
+    
+    assert success is True
+    assert mock_subprocess.called
 ```
 
-### Test Configuration
+### Coverage Requirements
 
-#### pytest.ini
-```ini
-[tool:pytest]
-testpaths = tests
-python_files = test_*.py
-python_classes = Test*
-python_functions = test_*
-addopts = 
-    --strict-markers
-    --strict-config
-    --verbose
-    --cov=TKT
-    --cov-report=term-missing
-    --cov-report=html:htmlcov
-markers =
-    slow: marks tests as slow
-    integration: marks tests as integration tests
-    ui: marks tests that test UI components
-```
+- **Minimum coverage**: 80% overall
+- **Critical paths**: 90%+ coverage for core functionality
+- **New features**: Must include comprehensive tests
 
 ### Running Tests
 
 ```bash
 # Run all tests
-pytest
+make test
 
-# Run with coverage
-pytest --cov=TKT --cov-report=html
+# Run with coverage reporting
+make coverage
 
 # Run specific test categories
-pytest -m "not slow"              # Skip slow tests
-pytest tests/test_cli.py          # Run specific module
-pytest -k "test_install"          # Run tests matching pattern
-
-# Run integration tests
-pytest tests/integration/
+pytest tests/unit/           # Unit tests only
+pytest tests/integration/    # Integration tests only
+pytest -k "test_install"     # Tests matching pattern
 ```
 
-## Contributing
+## Build System
 
-### Contribution Workflow
+### Makefile Structure
 
-1. **Create an issue** describing the bug/feature
-2. **Fork the repository** and create a feature branch
-3. **Make changes** following code standards
-4. **Write tests** for new functionality
-5. **Run the test suite** and ensure all tests pass
-6. **Submit a pull request** with clear description
+The project uses Make for build automation:
 
-### Branch Naming
+```makefile
+# Primary targets
+install: .venv/              # Set up development environment
+run: .venv/                  # Launch application
+test: .venv/                 # Run test suite
+check: typecheck lint format # Run all quality checks
 
-- `feature/description` - New features
-- `bugfix/description` - Bug fixes  
-- `docs/description` - Documentation changes
-- `refactor/description` - Code refactoring
+# Quality assurance
+typecheck: .venv/            # Static type checking with MyPy
+lint: .venv/                 # Code linting with Ruff
+format: .venv/               # Code formatting with Black/isort
+coverage: .venv/             # Coverage testing
+force-fix: .venv/            # Automatic code fixes
+```
 
-### Commit Messages
+### Key Build Patterns
 
-Follow conventional commit format:
+**Virtual Environment Management**:
+```makefile
+.venv/:
+	python -m venv .venv
+	.venv/bin/pip install -r requirements.txt
+
+# All targets depend on .venv/ to ensure environment exists
+run: .venv/
+	.venv/bin/python -m TKT
+```
+
+**Quality Checks Integration**:
+```makefile
+check: typecheck lint format
+	@echo "✅ All quality checks passed"
+
+typecheck: .venv/
+	.venv/bin/mypy TKT/
+
+lint: .venv/ 
+	.venv/bin/ruff check TKT/
+
+format: .venv/
+	.venv/bin/black TKT/
+	.venv/bin/isort TKT/
+```
+
+### Development Workflow
+
+```bash
+# Daily development cycle
+make install    # Initial setup (once)
+make run        # Test application
+make check      # Verify code quality
+make test       # Run test suite
+make coverage   # Check test coverage
+```
+
+## Distribution Support
+
+### Adding New Distribution Support
+
+The plugin architecture makes adding new distributions straightforward:
+
+#### 1. Research Phase
+- **Package Manager**: Identify distribution's package manager (apt, dnf, zypper, etc.)
+- **Package Names**: Map kernel development packages to distribution-specific names
+- **Commands**: Document update and installation command syntax
+
+#### 2. Implementation Phase
+
+**Create Distribution Config**:
+```python
+class NewDistroConfigs(DistroConfigs):
+    """Package management for NewDistro Linux."""
+    
+    # Distribution-specific package names
+    newdistro_deps = [
+        "kernel-devel",
+        "build-essential-equivalent", 
+        "development-tools"
+    ]
+    
+    def __init__(self):
+        self.packages = self.base_deps + self.newdistro_deps
+    
+    def update_repos(self) -> tuple[bool, str]:
+        """Update package repositories."""
+        return self._run_command(
+            ["sudo", "newpkg", "update"],
+            "Updating NewDistro repositories"
+        )
+    
+    def install_packages(self) -> tuple[bool, str]:
+        """Install kernel compilation dependencies."""
+        return self._run_command(
+            ["sudo", "newpkg", "install", "-y"] + self.packages,
+            "Installing NewDistro development packages"
+        )
+```
+
+**Register in Factory**:
+```python
+def get_distro_configs(distro_name: str) -> DistroConfigs:
+    configs = {
+        'arch': ArchConfigs,
+        'debian': DebianConfigs,
+        'ubuntu': UbuntuConfigs,
+        'newdistro': NewDistroConfigs,  # Add here
+    }
+    # ... rest of function
+```
+
+#### 3. Testing Phase
+- **Virtual Machine Testing**: Test on actual distribution
+- **Package Verification**: Ensure all dependencies install correctly
+- **Error Scenarios**: Test failure handling and error messages
+- **Integration Testing**: Verify with main application
+
+#### 4. Documentation Phase
+- **README Update**: Add to supported distributions table
+- **Contributing Guide**: Add distribution-specific notes
+- **Troubleshooting**: Document common issues and solutions
+
+### Distribution Detection
+
+The system automatically detects Linux distributions:
+
+```python
+def get_distribution_name() -> str:
+    """
+    Detect Linux distribution name.
+    
+    Returns:
+        str: Lowercase distribution name
+        
+    Raises:
+        RuntimeError: If distribution cannot be determined
+    """
+    try:
+        import distro
+        return distro.id().lower()
+    except ImportError:
+        # Fallback to /etc/os-release parsing
+        return parse_os_release()
+```
+
+## Contributing Workflow
+
+### Branch Strategy
+
+```bash
+# Feature development
+git checkout -b feature/add-fedora-support
+git checkout -b bugfix/fix-status-display
+git checkout -b docs/update-user-guide
+
+# Naming convention: type/description
+```
+
+### Pre-commit Workflow
+
+**Set up pre-commit hooks** (optional but recommended):
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+**Manual quality checks**:
+```bash
+make check    # Run all quality checks
+make test     # Run test suite
+```
+
+### Pull Request Process
+
+1. **Create feature branch** from main
+2. **Implement changes** following code standards
+3. **Add tests** for new functionality
+4. **Update documentation** as needed
+5. **Run quality checks**: `make check`
+6. **Submit pull request** with clear description
+
+### Commit Message Format
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
 ```
 type(scope): description
 
@@ -420,313 +514,193 @@ type(scope): description
 [optional footer]
 ```
 
-Examples:
+**Examples**:
 ```
-feat(distro): add fedora support for package management
+feat(distro): add fedora support with dnf package management
 
-- Implement FedoraConfigs class with dnf commands
-- Add fedora to supported distributions list
-- Update documentation
+- Implement FedoraConfigs class
+- Add fedora to supported distributions  
+- Update documentation with fedora notes
 
 Closes #123
-```
 
-```
-fix(ui): resolve status message display issue
+fix(ui): resolve status message not updating after dependency installation
 
-The status label was not updating correctly after
-dependency installation due to widget not being mounted.
+The status widget was not refreshing due to async timing issues.
+Added proper state management and UI update triggers.
 
 Fixes #456
 ```
-
-### Pull Request Template
-
-```markdown
-## Description
-Brief description of changes made.
-
-## Type of Change
-- [ ] Bug fix (non-breaking change)
-- [ ] New feature (non-breaking change)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
-
-## Testing
-- [ ] Tests pass locally
-- [ ] Added tests for new functionality
-- [ ] Tested on target distributions
-
-## Checklist
-- [ ] Code follows project style guidelines
-- [ ] Self-review completed
-- [ ] Documentation updated
-- [ ] No unnecessary dependencies added
-```
-
-## Adding New Features
-
-### Feature Development Process
-
-1. **Design phase**: Create issue with detailed specification
-2. **Architecture review**: Discuss integration approach
-3. **Implementation**: Follow TDD (Test-Driven Development)
-4. **Testing**: Unit tests, integration tests, manual testing
-5. **Documentation**: Update all relevant documentation
-6. **Review**: Code review and feedback incorporation
-
-### Example: Adding Kernel Configuration Feature
-
-#### 1. Define Interface
-```python
-# In TKTSystemManager
-def configure_kernel(
-    self, 
-    kernel_version: str, 
-    config_type: str = "default"
-) -> tuple[bool, str]:
-    """
-    Configure kernel for compilation.
-    
-    Args:
-        kernel_version: Target kernel version
-        config_type: Configuration type (default, custom, minimal)
-        
-    Returns:
-        tuple[bool, str]: (success, message)
-    """
-```
-
-#### 2. Implement Core Logic
-```python
-def configure_kernel(self, kernel_version: str, config_type: str = "default") -> tuple[bool, str]:
-    if not self.distro_supported:
-        return False, "Distribution not supported for kernel configuration"
-    
-    try:
-        # Implement kernel configuration logic
-        config_path = self._get_kernel_config_path(kernel_version)
-        
-        if config_type == "default":
-            success = self._apply_default_config(config_path)
-        elif config_type == "custom":
-            success = self._run_menuconfig(config_path)
-        else:
-            return False, f"Unknown configuration type: {config_type}"
-            
-        if success:
-            return True, f"Kernel {kernel_version} configured successfully"
-        else:
-            return False, "Kernel configuration failed"
-            
-    except Exception as e:
-        return False, f"Configuration error: {str(e)}"
-```
-
-#### 3. Add UI Integration
-```python
-# In KernelToolkitApp.handle_command
-elif command_lower.startswith("config:"):
-    config_parts = command_lower.split(":", 2)
-    if len(config_parts) >= 2:
-        config_type = config_parts[1]
-        kernel_version = config_parts[2] if len(config_parts) > 2 else self.selected_kernel
-        
-        if not kernel_version:
-            self.update_status("No kernel version selected")
-            return True
-            
-        self.update_status(f"Configuring kernel {kernel_version}...")
-        self.refresh()
-        
-        success, message = self.system_manager.configure_kernel(kernel_version, config_type)
-        self.update_status(f"{'✓' if success else '✗'} {message}")
-        return True
-```
-
-#### 4. Add Tests
-```python
-class TestKernelConfiguration:
-    def test_configure_kernel_default(self):
-        """Test default kernel configuration."""
-        manager = TKTSystemManager()
-        manager.distro_supported = True
-        
-        with patch.object(manager, '_apply_default_config', return_value=True):
-            success, message = manager.configure_kernel("6.16", "default")
-            assert success is True
-            assert "configured successfully" in message
-
-    def test_configure_kernel_unsupported_distro(self):
-        """Test kernel configuration on unsupported distribution."""
-        manager = TKTSystemManager()
-        manager.distro_supported = False
-        
-        success, message = manager.configure_kernel("6.16")
-        assert success is False
-        assert "not supported" in message
-```
-
-## Distribution Support
-
-### Adding New Distribution Support
-
-#### Step 1: Create Distribution Configuration Class
-
-```python
-# In distro_configs.py
-class NewDistroConfigs(DistroConfigs):
-    """Package management configuration for NewDistro."""
-    
-    # Distribution-specific dependencies
-    new_distro_deps = [
-        "kernel-headers",
-        "build-tools",
-        "dev-libs",
-    ]
-    
-    def __init__(self):
-        self.packages = self.base_deps + self.new_distro_deps
-    
-    def update_repos(self) -> bool:
-        """Update package repositories."""
-        return self._run_command(
-            ["sudo", "newdistro-pkg", "update"],
-            "Updating NewDistro repositories"
-        )
-    
-    def install_packages(self) -> bool:
-        """Install required packages."""
-        return self._run_command(
-            ["sudo", "newdistro-pkg", "install"] + self.packages,
-            "Installing NewDistro packages"
-        )
-```
-
-#### Step 2: Register in Factory Function
-
-```python
-def get_distro_configs(name: str) -> DistroConfigs:
-    match name.lower():
-        case "arch": return ArchConfigs()
-        case "debian": return DebianConfigs()
-        case "ubuntu": return UbuntuConfigs()
-        case "newdistro": return NewDistroConfigs()  # Add this line
-        case _: raise ValueError(f"Unsupported distribution: {name}")
-```
-
-#### Step 3: Update Supported Distributions List
-
-```python
-# In cli.py
-SUPPORTED_DISTROS: Final[list[str]] = [
-    "debian",
-    "ubuntu", 
-    "fedora",
-    "arch",
-    "newdistro",  # Add this line
-]
-```
-
-#### Step 4: Add Tests
-
-```python
-class TestNewDistroConfigs:
-    def test_new_distro_initialization(self):
-        """Test NewDistro configuration initialization."""
-        config = NewDistroConfigs()
-        assert len(config.packages) > len(config.base_deps)
-        assert "kernel-headers" in config.packages
-    
-    def test_get_distro_configs_new_distro(self):
-        """Test factory function returns correct config."""
-        config = get_distro_configs("newdistro")
-        assert isinstance(config, NewDistroConfigs)
-```
-
-#### Step 5: Update Documentation
-
-Update all relevant documentation:
-- README.md supported distributions table
-- User guide installation instructions
-- API documentation with new class
-- Add distribution-specific troubleshooting notes
-
-### Distribution Testing
-
-Test new distribution support thoroughly:
-
-1. **Virtual machine testing**: Test on actual distribution
-2. **Package installation**: Verify all dependencies install correctly
-3. **Permission handling**: Test sudo requirements
-4. **Error conditions**: Test network failures, permission errors
-5. **Integration testing**: Test with main application
 
 ## Release Process
 
 ### Version Management
 
-TKT uses semantic versioning (MAJOR.MINOR.PATCH):
+**Project versioning** in `pyproject.toml`:
+```toml
+[project]
+name = "the-kernel-toolkit"
+version = "0.1.0"  # Update for releases
+```
 
-- **MAJOR**: Breaking changes
-- **MINOR**: New features (backward compatible)
-- **PATCH**: Bug fixes (backward compatible)
+### CI/CD Pipeline
+
+**GitHub Actions** (`.github/workflows/lint.yml`):
+```yaml
+name: Lint & Format
+on: [pull_request, push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      # Quality checks
+      - run: pip install black isort ruff
+      - run: black --check .
+      - run: ruff check .
+      - run: isort --check-only .
+```
 
 ### Release Checklist
 
-#### Pre-release
-- [ ] All tests pass on CI/CD
-- [ ] Documentation updated
-- [ ] Changelog updated
-- [ ] Version bumped in `__init__.py`
-- [ ] Dependencies reviewed and updated
-
-#### Release
-- [ ] Create release branch: `release/vX.Y.Z`
-- [ ] Final testing on supported distributions
+- [ ] Update version in `pyproject.toml`
+- [ ] Update `CHANGELOG.md` with new features and fixes
+- [ ] Run full test suite: `make test coverage`
+- [ ] Update documentation for any API changes
+- [ ] Create release branch and submit PR
+- [ ] Tag release after merge: `git tag v0.1.0`
 - [ ] Create GitHub release with changelog
-- [ ] Tag release: `git tag vX.Y.Z`
-- [ ] Merge to main branch
 
-#### Post-release
-- [ ] Update development version
-- [ ] Close milestone on GitHub
-- [ ] Announce release in discussions
-- [ ] Update documentation site
+## Debugging & Troubleshooting
 
-### Automated Testing
+### Logging Strategy
 
-Set up GitHub Actions for automated testing:
+**Application logs** stored in `~/.local/share/tkt/logs/`:
+```python
+import logging
 
-```yaml
-# .github/workflows/test.yml
-name: Test
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.10, 3.11, 3.12]
-        
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Install dependencies
-      run: |
-        pip install -e .
-        pip install pytest pytest-cov
-        
-    - name: Run tests
-      run: pytest --cov=TKT --cov-report=xml
-      
-    - name: Upload coverage
-      uses: codecov/codecov-action@v3
+logger = logging.getLogger(__name__)
+logger.info("Dependency installation started")
+logger.error(f"Failed to install package: {package_name}")
 ```
 
-This developer guide provides the foundation for contributing to and extending the TKT project. For specific implementation questions, refer to the existing codebase and create GitHub discussions for architectural decisions.
+### Common Development Issues
+
+**Import Errors**:
+```bash
+# Ensure virtual environment is activated
+source .venv/bin/activate
+# Or use Make targets which handle this automatically
+make run
+```
+
+**Test Failures**:
+```bash
+# Run with verbose output
+pytest -v tests/
+
+# Run specific failing test
+pytest tests/unit/test_cli.py::TestTKTSystemManager::test_install_dependencies
+
+# Run with debugging
+pytest --pdb tests/
+```
+
+**Type Checking Issues**:
+```bash
+# Run MyPy with verbose output
+make typecheck
+
+# Check specific file
+.venv/bin/mypy TKT/cli.py
+```
+
+### Performance Debugging
+
+**Profile application startup**:
+```python
+import cProfile
+import pstats
+
+def profile_main():
+    pr = cProfile.Profile()
+    pr.enable()
+    
+    # Run application code
+    from TKT.cli import main
+    main()
+    
+    pr.disable()
+    stats = pstats.Stats(pr)
+    stats.sort_stats('cumulative').print_stats(10)
+```
+
+**Memory usage monitoring**:
+```python
+import tracemalloc
+
+tracemalloc.start()
+# ... application code ...
+current, peak = tracemalloc.get_traced_memory()
+print(f"Current memory usage: {current / 1024 / 1024:.1f} MB")
+```
+
+### Distribution-Specific Debugging
+
+**Test distribution detection**:
+```python
+from TKT.cli import get_distribution_name
+print(f"Detected distribution: {get_distribution_name()}")
+```
+
+**Test package manager commands**:
+```bash
+# Test in isolation
+python -c "
+from TKT.distro_configs import get_distro_configs
+config = get_distro_configs('arch')  # or your distro
+success, msg = config.update_repos()
+print(f'Update repos: {success}, {msg}')
+"
+```
+
+### UI Debugging
+
+**Textual development tools**:
+```python
+# Enable Textual development mode
+export TEXTUAL=devtools
+
+# Run with debug logging
+python -m TKT --dev
+```
+
+**Console debugging**:
+```python
+# Add to Textual app for live debugging
+from textual import log
+log("Debug message here")
+```
+
+---
+
+## Contributing to This Guide
+
+This developer documentation is maintained alongside the codebase. When contributing:
+
+1. **Update relevant sections** when adding new features
+2. **Add examples** for new architectural patterns  
+3. **Document new tools** or development processes
+4. **Keep examples current** with actual codebase
+
+**Location**: This guide should be saved as `DEVELOPER_GUIDE.md` in the project root.
+
+For questions about development practices or architecture decisions, please:
+- Check existing [GitHub Issues](https://github.com/matteskes/TKT_Framework/issues)
+- Start a [GitHub Discussion](https://github.com/matteskes/TKT_Framework/discussions)
+- Reference this guide in code reviews and documentation updates
