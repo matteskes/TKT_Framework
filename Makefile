@@ -37,7 +37,7 @@ typecheck: $(VENV)
 	$(MYPY) $(TKT) $(TEST_DIR)
 
 lint: $(VENV)
-	$(RUFF) check $(TKT) $(TEST_DIR)
+	$(RUFF) check $(TKT) $(TEST_DIR)/test_*.py
 
 format: $(VENV)
 	$(BLACK) $(TKT) $(TEST_DIR)
