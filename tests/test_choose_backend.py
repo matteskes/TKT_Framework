@@ -1,7 +1,6 @@
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import mock_open, patch
+from unittest.mock import mock_open
 
 import pytest
 import tomlkit

@@ -1,6 +1,4 @@
-from unittest.mock import Mock, patch
-
-import pytest
+from unittest.mock import Mock
 
 from TKT.cli import TKTSystemManager
 
