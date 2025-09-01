@@ -1,7 +1,7 @@
 # The Kernel Toolkit (TKT)
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-[![Python 3.11+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Platform: Linux](https://img.shields.io/badge/platform-Linux-green.svg)](https://www.kernel.org/)
 
 A modern, user-friendly terminal application for compiling and managing custom Linux kernels across multiple distributions.
@@ -118,9 +118,13 @@ python -m TKT
 | Distribution | Package Manager | Status |
 |-------------|----------------|--------|
 | Arch Linux | pacman/makepkg | Supported |
-| Debian | apt-get | Supported |
-| Ubuntu | apt-get | Supported |
+| Debian | apt | Supported |
+| Ubuntu | apt | Supported |
 | Fedora | dnf |  Planned |
+| Linux Mint | apt | Planned |
+| Open SuSE | zypper | Planned |
+| Pop_OS! | apt | Planned |
+
 
 ## Configuration
 
@@ -277,7 +281,7 @@ TKT creates log files in `~/.local/share/tkt/logs/` for debugging purposes.
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 ### Areas for Contribution
-- Complete Fedora support implementation
+
 - Add more distribution support
 - Implement kernel configuration features
 - Add kernel source preparation logic
