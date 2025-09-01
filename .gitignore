@@ -6,3 +6,4 @@ __pycache__
 htmlcov/
 coverage.json
 coverage.xml
+.github/workflows
