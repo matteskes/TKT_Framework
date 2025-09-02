@@ -26,7 +26,6 @@ Design:
       affects plants.
 """
 
-
 from typing import Callable, Generic, TypeVar
 
 T = TypeVar("T")
