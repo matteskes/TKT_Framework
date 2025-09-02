@@ -374,21 +374,27 @@ markers =
 ```
 
 ### Running Tests
+```
+* **`make test`**
+  Runs the test suite with `pytest`.
 
-```bash
-# Run all tests
-pytest
+* **`make coverage`**
+  Run coverage tests. Regular test results will not show up.
 
-# Run with coverage
-pytest --cov=TKT --cov-report=html
+* **`make typecheck`**
+  Performs static type checking using `mypy`.
 
-# Run specific test categories
-pytest -m "not slow"              # Skip slow tests
-pytest tests/test_cli.py          # Run specific module
-pytest -k "test_install"          # Run tests matching pattern
+* **`make lint`**
+  Runs `ruff` to check code style and linting issues.
 
-# Run integration tests
-pytest tests/integration/
+* **`make format`**
+  Formats the code with `black` and `isort`.
+
+* **`make force-fix`**
+  Runs `ruff` with automatic fixes (including unsafe ones).
+
+* **`make check`**
+  Runs type checking, linting, and formatting in one step.
 ```
 
 ## Contributing
