@@ -1,8 +1,6 @@
 import pytest
 
-from TKT.distro_configs import (
-    DistroConfigs,
-)
+from TKT.distro_configs import DistroConfigs
 
 
 class TestDistroConfigs:
