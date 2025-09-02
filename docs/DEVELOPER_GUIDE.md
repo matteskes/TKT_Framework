@@ -374,7 +374,7 @@ markers =
 ```
 
 ### Running Tests
-```
+
 * **`make test`**
   Runs the test suite with `pytest`.
 
@@ -395,7 +395,7 @@ markers =
 
 * **`make check`**
   Runs type checking, linting, and formatting in one step.
-```
+
 
 ## Contributing
 
