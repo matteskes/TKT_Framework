@@ -26,10 +26,12 @@ Design:
       affects plants.
 """
 
-from typing import Callable, Generic, TypeVar
+from typing import Callable, Generic, ParamSpec, TypeVar, cast
 
 T = TypeVar("T")
+U = TypeVar("U")
 E = TypeVar("E", bound=Exception)
+P = ParamSpec("P")
 
 
 class Result(Generic[T, E]):
@@ -52,38 +54,38 @@ class Result(Generic[T, E]):
             return f"Result(err={self.err!r})"
 
     @property
-    def is_ok(self):
+    def is_ok(self) -> bool:
         return self.err is None
 
     @property
-    def is_err(self):
+    def is_err(self) -> bool:
         return self.err is not None
 
-    def unwrap(self):
+    def unwrap(self) -> T:
         if self.is_ok:
-            return self.ok
-        raise self.err
+            return cast(T, self.ok)
+        raise cast(E, self.err)
 
-    def unwrap_or(self, default, /):
-        return self.ok if self.is_ok else default
+    def unwrap_or(self, default: U, /) -> T | U:
+        return cast(T, self.ok) if self.is_ok else default
 
 
-class SafeFunction:
+class SafeFunction(Generic[P, T]):
     """
     Callable wrapper that executes a function and captures raised
     exceptions as `Result` objects.
     """
 
-    def __init__(self, func: Callable, /):
+    def __init__(self, func: Callable[P, T], /):
         self._func = func
 
-    def __call__(self, *args, **kwargs) -> Result:
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Result[T, Exception]:
         try:
             return Result(ok=self._func(*args, **kwargs))
         except Exception as err:
             return Result(err=err)
 
 
-def safe(func: Callable):
+def safe(func: Callable[P, T]) -> SafeFunction[P, T]:
     """A decorator for functions that can raise errors."""
     return SafeFunction(func)
