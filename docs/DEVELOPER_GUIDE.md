@@ -17,7 +17,7 @@ This guide is for developers who want to contribute to The Kernel Toolkit (TKT) 
 
 ### Prerequisites
 
-- **Python 3.10+** with pip
+- **Python 3.11+** with pip
 - **Git** for version control
 - **Linux system** for testing (or VM)
 - **Text editor/IDE** with Python support
@@ -207,7 +207,7 @@ Create `.pyproject.toml`:
 ```toml
 [tool.black]
 line-length = 88
-target-version = ['py310']
+target-version = ['py311']
 include = '\.pyi?
 extend-exclude = '''
 /(
@@ -216,33 +216,33 @@ extend-exclude = '''
   | dist/
 )/
 '''
-
 ```
+
+
 ### Pre-commit Configuration
 
+Create `.pre-commit-config.yaml`:
+```yaml
 repos:
-  # Black for formatting
   - repo: https://github.com/psf/black
-    rev: 24.4.2  # pin to latest stable
+    rev: 22.3.0
     hooks:
       - id: black
-
-  # isort for import sorting
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2 # pin to lastest stable
-    hooks:
-      - id: isort
-
-  # Ruff for linting
-  - repo: https://github.com/astral-sh/ruff-pre-commit
+        language_version: python3
+        
+  - repo: https://github.com/astral-sh/ruff-precommit
     rev: v0.6.9
     hooks:
       - id: ruff
-      - id: ruff-format  # optional, if you want Ruff formatting checks too
+      
+  - repo: https://github.com/psf/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
 ```
 
+## Testing
 
-```
 ### Testing Framework
 
 TKT uses pytest for testing with the following structure:
@@ -338,30 +338,44 @@ def test_dependency_installation_ui():
         assert "Installing dependencies" in status_label.renderable
 ```
 
+### Test Configuration
+
+#### pytest.ini
+```ini
+[tool:pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = 
+    --strict-markers
+    --strict-config
+    --verbose
+    --cov=TKT
+    --cov-report=term-missing
+    --cov-report=html:htmlcov
+markers =
+    slow: marks tests as slow
+    integration: marks tests as integration tests
+    ui: marks tests that test UI components
+```
+
 ### Running Tests
 
-* **`make test`**
-  Runs the test suite with `pytest`.
+```bash
+# Run all tests
+pytest
 
-* **`make coverage`**
-  Run coverage tests. Regular test results will not show up.
+# Run with coverage
+pytest --cov=TKT --cov-report=html
 
-* **`make typecheck`**
-  Performs static type checking using `mypy`.
+# Run specific test categories
+pytest -m "not slow"              # Skip slow tests
+pytest tests/test_cli.py          # Run specific module
+pytest -k "test_install"          # Run tests matching pattern
 
-* **`make lint`**
-  Runs `ruff` to check code style and linting issues.
-
-* **`make format`**
-  Formats the code with `black` and `isort`.
-
-* **`make force-fix`**
-  Runs `ruff` with automatic fixes (including unsafe ones).
-
-* **`make check`**
-  Runs type checking, linting, and formatting in one step.
-
-```
+# Run integration tests
+pytest tests/integration/
 ```
 
 ## Contributing
