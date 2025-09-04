@@ -69,10 +69,10 @@ def cached_fetch(url: str, name: str, ttl: int = 3600) -> Any:
 
 
 @safe
-def download_file(url: str, quiet: bool = False) -> str:
+def download_file(url: str, output: str | None = None, quiet: bool = False) -> str:
     with requests.get(url, stream=True) as response:
         response.raise_for_status()
-        output_file = filename_from_url(url)
+        output_file = output if output else filename_from_url(url)
 
         total = int(response.headers.get("Content-Length", 0))  # 0 if missing
         downloaded = 0
