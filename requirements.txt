@@ -1,6 +1,7 @@
 # runtime dependencies
 textual
 tomlkit>=0.12.0
+requests
 
 # dev dependencies
 mypy
