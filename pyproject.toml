@@ -36,6 +36,11 @@ omit = [
     "__main__.py",
 ]
 
+[tool.coverage.report]
+exclude_also = [
+    'if __name__ == "__main__"',
+]
+
 [project]
 name = "the-kernel-toolkit"
 version = "0.1.0"
