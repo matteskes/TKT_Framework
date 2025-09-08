@@ -12,7 +12,9 @@ BLACK  = $(VENV)/bin/$(PYTHON) -m black
 ISORT  = $(VENV)/bin/$(PYTHON) -m isort
 
 PYTEST_FLAGS = --verbose
+PYTEST_FILES = tests
 COVERAGE_DIR = $(TKT)/
+COV_REPORT   = term-missing
 
 run: $(VENV)
 	$(VENV)/bin/$(PYTHON) -m $(TKT)
@@ -27,11 +29,19 @@ $(VENV): requirements.txt
 	$(MYPY) --install-types --non-interactive
 	touch "$(VENV)"
 
+ifneq (,$(and $(filter test,$(MAKECMDGOALS)),$(filter coverage,$(MAKECMDGOALS))))
+# run test and coverage rules at the same time
+test:
+	$(PYTEST) --cov=$(COVERAGE_DIR) --cov-report=$(COV_REPORT) $(PYTEST_FLAGS) $(PYTEST_FILES)
+coverage:
+	@:
+else
+# define test and coverage as separate rules
 test: $(VENV)
 	$(PYTEST) $(PYTEST_FLAGS) $(PYTEST_FILES)
-
 coverage: $(VENV)
-	$(PYTEST) --cov=$(COVERAGE_DIR) --cov-report=term-missing $(TEST_DIR)
+	$(PYTEST) --cov=$(COVERAGE_DIR) --cov-report=$(COV_REPORT) $(TEST_DIR)
+endif
 
 typecheck: $(VENV)
 	$(MYPY) $(TKT) $(TEST_DIR)
