@@ -80,6 +80,13 @@ class BaseResult(ABC, Generic[T, E]):
         """
 
     @abstractmethod
+    def __eq__(self, other: Any, /) -> bool:
+        """
+        Return True if other is the same Result variant and has
+        an equal inner value or return False otherwise.
+        """
+
+    @abstractmethod
     def unwrap(self) -> T:
         """
         Return the contained value if Ok, otherwise raise the contained
@@ -166,6 +173,13 @@ class Ok(BaseResult[T, Any]):
     def __or__(self, other: Any, /) -> Any:
         return self
 
+    def __eq__(self, other: Any, /) -> bool:
+        match other:
+            case Ok(value):
+                return self.ok == value
+            case _:
+                return False
+
     def __repr__(self) -> str:
         """Return string representation: `Ok(value)`."""
         return f"Ok({self._value!r})"
@@ -228,6 +242,13 @@ class Err(BaseResult[Never, E]):
 
     def __or__(self, other: Any, /) -> Any:
         return other
+
+    def __eq__(self, other: Any, /) -> bool:
+        match other:
+            case Err(error):
+                return self.err == error
+            case _:
+                return False
 
     def __repr__(self) -> str:
         """Return string representation: `Err(error)`."""
