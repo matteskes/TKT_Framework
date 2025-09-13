@@ -1,6 +1,8 @@
+import os
+
 import pytest
 
-from TKT.safe import Err, Ok
+from TKT.safe import Err, Ok, SafeFunction, safe
 
 
 @pytest.mark.parametrize("Result", [Ok, Err])
@@ -45,9 +47,9 @@ class TestResult:
             assert res1 != res3
         elif Result is Err:
             error = Exception("some error")
-            res1  = Err(error)
-            res2  = Err(RuntimeError("another error"))
-            res3  = Ok(7)
+            res1 = Err(error)
+            res2 = Err(RuntimeError("another error"))
+            res3 = Ok(7)
             assert res1 == Err(error)
             assert res1 != res2
             assert res1 != res3
@@ -55,11 +57,11 @@ class TestResult:
     def test_string_representation(self, Result):
         """Should return 'Ok(value)' or 'Err(error)'."""
         if Result is Ok:
-            value  = "some value"
+            value = "some value"
             result = Ok(value)
             assert repr(result) == f"Ok({value!r})"
         elif Result is Err:
-            error  = Exception("some error")
+            error = Exception("some error")
             result = Err(error)
             assert repr(result) == f"Err({error!r})"
 
@@ -110,9 +112,9 @@ class TestResult:
         map_or should apply a function for Ok, or return
         the default for Err.
         """
-        value      = object()
-        default    = object()
-        result     = Result(value)
+        value = object()
+        default = object()
+        result = Result(value)
         new_result = result.map_or({"result": Ok(0)}, lambda x: {"result": Ok(x)})
         match result:
             case Ok(inner_value):
@@ -125,6 +127,7 @@ class TestResult:
         map_err should transform the error in Err
         and leave Ok unchanged.
         """
+
         def wrap_error(err: Exception) -> RuntimeError:
             new_err = RuntimeError("A new error")
             new_err.__cause__ = err
@@ -133,11 +136,11 @@ class TestResult:
         value = object()
         error = Exception("It is an error")
         if Result is Ok:
-            result     = Ok(value)
+            result = Ok(value)
             new_result = result.map_err(wrap_error)
             assert new_result == result
         elif Result is Err:
-            result     = Err(error)
+            result = Err(error)
             new_result = result.map_err(wrap_error)
             with pytest.raises(RuntimeError, check=wrap_error):
                 new_result.unwrap()
@@ -145,43 +148,86 @@ class TestResult:
     def test_is_ok(self, Result):
         """Should return True if Result is Ok and False otherwise."""
         if Result is Ok:
-            value  = object()
+            value = object()
             result = Ok(value)
             assert result.is_ok
         elif Result is Err:
-            error  = Exception("error")
+            error = Exception("error")
             result = Err(error)
             assert not result.is_ok
 
     def test_is_err(self, Result):
         """Should return True if Result is Err and False otherwise."""
         if Result is Ok:
-            value  = object()
+            value = object()
             result = Ok(value)
             assert not result.is_err
         elif Result is Err:
-            error  = Exception("error")
+            error = Exception("error")
             result = Err(error)
             assert result.is_err
 
     def test_ok(self, Result):
         """Should return the inner value if Ok or None otherwise."""
         if Result is Ok:
-            value  = object()
+            value = object()
             result = Ok(value)
             assert result.ok is value
         elif Result is Err:
-            error  = Exception("error")
+            error = Exception("error")
             result = Err(error)
             assert result.ok is None
 
     def test_err(self, Result):
         """Should return the wrapped error if Err or None otherwise."""
         if Result is Ok:
-            value  = object()
+            value = object()
             result = Ok(value)
             assert result.err is None
         elif Result is Err:
-            error  = Exception("error")
+            error = Exception("error")
             result = Err(error)
             assert result.err is error
+
+
+class TestSafeFunction:
+    def test_init(self):
+        def predecessor(num):
+            return num - 1
+
+        safe_function = SafeFunction(predecessor)
+        assert safe_function._func is predecessor
+
+    def test_call_ok(self):
+        def successor(num):
+            return num + 1
+
+        safe_function = SafeFunction(successor)
+        assert safe_function(7) == Ok(8)
+
+    def test_call_err(self):
+        def raises_error(msg):
+            raise RuntimeError(msg)
+
+        safe_function = SafeFunction(raises_error)
+        with pytest.raises(RuntimeError, match="^oopsie$"):
+            safe_function("oopsie").unwrap()
+
+
+class TestSafeDecorator:
+    def test_safe(self):
+        os.environ["TKT_DEBUG"] = "false"
+
+        @safe
+        def raises_error(msg):
+            raise RuntimeError(msg)
+
+        assert isinstance(raises_error, SafeFunction)
+
+    def test_safe_debug(self):
+        os.environ["TKT_DEBUG"] = "true"
+
+        def raises_error(msg):
+            raise RuntimeError(msg)
+
+        assert safe(raises_error) is raises_error
