@@ -20,9 +20,9 @@ class TestResult:
         other = object()
         match result:
             case Ok(_):
-                assert (result and other) is other
+                assert (result & other) is other
             case Err(_):
-                assert (result and other) is result
+                assert (result & other) is result
 
     def test_or_operator(self, Result):
         """Test short-circuit OR: Ok returns self, Err returns other."""
@@ -30,9 +30,38 @@ class TestResult:
         other = object()
         match result:
             case Ok(_):
-                assert (result or other) is result
+                assert (result | other) is result
             case Err(_):
-                assert (result or other) is other
+                assert (result | other) is other
+
+    def test_eq_operator(self, Result):
+        """Test two distinct Result objects for equality."""
+        if Result is Ok:
+            res1 = Ok(7)
+            res2 = Ok(10)
+            res3 = Err(Exception("error"))
+            assert res1 == Ok(7)
+            assert res1 != res2
+            assert res1 != res3
+        elif Result is Err:
+            error = Exception("some error")
+            res1  = Err(error)
+            res2  = Err(RuntimeError("another error"))
+            res3  = Ok(7)
+            assert res1 == Err(error)
+            assert res1 != res2
+            assert res1 != res3
+
+    def test_string_representation(self, Result):
+        """Should return 'Ok(value)' or 'Err(error)'."""
+        if Result is Ok:
+            value  = "some value"
+            result = Ok(value)
+            assert repr(result) == f"Ok({value!r})"
+        elif Result is Err:
+            error  = Exception("some error")
+            result = Err(error)
+            assert repr(result) == f"Err({error!r})"
 
     def test_unwrap(self, Result):
         """
@@ -112,3 +141,47 @@ class TestResult:
             new_result = result.map_err(wrap_error)
             with pytest.raises(RuntimeError, check=wrap_error):
                 new_result.unwrap()
+
+    def test_is_ok(self, Result):
+        """Should return True if Result is Ok and False otherwise."""
+        if Result is Ok:
+            value  = object()
+            result = Ok(value)
+            assert result.is_ok
+        elif Result is Err:
+            error  = Exception("error")
+            result = Err(error)
+            assert not result.is_ok
+
+    def test_is_err(self, Result):
+        """Should return True if Result is Err and False otherwise."""
+        if Result is Ok:
+            value  = object()
+            result = Ok(value)
+            assert not result.is_err
+        elif Result is Err:
+            error  = Exception("error")
+            result = Err(error)
+            assert result.is_err
+
+    def test_ok(self, Result):
+        """Should return the inner value if Ok or None otherwise."""
+        if Result is Ok:
+            value  = object()
+            result = Ok(value)
+            assert result.ok is value
+        elif Result is Err:
+            error  = Exception("error")
+            result = Err(error)
+            assert result.ok is None
+
+    def test_err(self, Result):
+        """Should return the wrapped error if Err or None otherwise."""
+        if Result is Ok:
+            value  = object()
+            result = Ok(value)
+            assert result.err is None
+        elif Result is Err:
+            error  = Exception("error")
+            result = Err(error)
+            assert result.err is error
