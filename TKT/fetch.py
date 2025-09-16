@@ -72,6 +72,9 @@ class FileSize(int):
         self._bytes += other
         return self
 
+    def __eq__(self, other: Any) -> bool:
+        return self._bytes == other
+
 
 @dataclass(frozen=True)
 class FileData:
