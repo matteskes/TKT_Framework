@@ -1,6 +1,8 @@
+import datetime
+
 import pytest
 
-from TKT.fetch import FileSize
+from TKT.fetch import FileData, FileSize
 
 
 class TestFileSize:
@@ -58,9 +60,68 @@ class TestFileSize:
 class TestFileData:
     def test_init(self):
         """Test FileData initialization with expected attributes."""
+        name = "Arch-linux-bore-gcc.tar.gz"
+        size = FileSize(56245816)  # 53.64 MB
+        updated_at = datetime.datetime(2025, 8, 21, 20, 0, 38, tzinfo=datetime.timezone.utc)
+        digest = "sha256:20f5dfedc4b2f989ad022ba7aa697f5986c28841a44068ab76a2cacd1d06fe83"
+        url = f"https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/{name}"
+        version = "TKT v6.16-tkt — GHCI Prebuilt Diet Kernel"
+        tag = "v6.16-tkt"
+
+        file_data = FileData(
+            name=name,
+            size=size,
+            updated_at=updated_at,
+            digest=digest,
+            url=url,
+            version=version,
+            tag=tag,
+        )
+
+        assert file_data.name == name
+        assert file_data.size == size
+        assert file_data.updated_at == updated_at
+        assert file_data.digest == digest
+        assert file_data.url == url
+        assert file_data.version == version
+        assert file_data.tag == tag
 
     def test_post_init(self):
         """
         Test __post_init__ extracts distro, scheduler
         and compiler from name.
         """
+
+        name = "Debian-linux-diet-eevdf-gcc.tar.gz"
+        size = FileSize(564559951)
+        updated_at = datetime.datetime(2025, 8, 21, 20, 1, tzinfo=datetime.timezone.utc)
+        digest = "sha256:5434fd4289962cfbab5bcee6074c5514e82ea6c94d878d6e5aa71605128dd23d"
+        url = f"https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/{name}"
+        version = "TKT v6.16-tkt — GHCI Prebuilt Diet Kernel"
+        tag = "v6.16-tkt"
+
+        file_data = FileData(
+            name=name,
+            size=size,
+            updated_at=updated_at,
+            digest=digest,
+            url=url,
+            version=version,
+            tag=tag,
+        )
+
+        assert file_data.distro == "Debian"
+        assert file_data.scheduler == "eevdf"
+        assert file_data.compiler == "gcc"
+
+        name = "Debian-linux.tar.gz"
+        with pytest.raises(ValueError, match="^Unexpected file name format"):
+            file_data = FileData(
+                name=name,
+                size=size,
+                updated_at=updated_at,
+                digest=digest,
+                url=url,
+                version=version,
+                tag=tag,
+            )
