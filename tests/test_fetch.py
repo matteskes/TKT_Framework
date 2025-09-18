@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from TKT.fetch import FileData, FileSize
+from TKT.fetch import FileData, FileSize, filename_from_url
 
 
 class TestFileSize:
@@ -125,3 +125,28 @@ class TestFileData:
                 version=version,
                 tag=tag,
             )
+
+
+class TestFunctions:
+    def test_filename_from_url(self):
+        name = "Arch-linux-bore-gcc.tar.gz"
+        url = f"https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/{name}"
+        result = filename_from_url(url)
+        assert result == name
+
+        # test with id
+        name = "Debian-linux-diet-eevdf-gcc.tar.gz"
+        url = f"https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/{name}#releases"
+        result = filename_from_url(url)
+        assert result == name
+
+        # test with query parameters
+        name = "Fedora-linux-diet-eevdf-gcc.tar.gz"
+        url = f"https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/{name}?distro=fedora"
+        result = filename_from_url(url)
+        assert result == name
+
+        # test with empty path
+        url = "https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/"
+        result = filename_from_url(url)
+        assert result == "downloaded.file"
