@@ -1,8 +1,19 @@
 import datetime
+import json
+import os
+import time
+from pathlib import Path
+from typing import Final
 
 import pytest
+import requests
 
-from TKT.fetch import FileData, FileSize, filename_from_url
+from TKT.fetch import FileData, FileSize, cached_fetch, filename_from_url
+from TKT.safe import Ok
+
+BASE_URL: Final[str] = (
+    "https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt"
+)
 
 
 class TestFileSize:
@@ -62,9 +73,13 @@ class TestFileData:
         """Test FileData initialization with expected attributes."""
         name = "Arch-linux-bore-gcc.tar.gz"
         size = FileSize(56245816)  # 53.64 MB
-        updated_at = datetime.datetime(2025, 8, 21, 20, 0, 38, tzinfo=datetime.timezone.utc)
-        digest = "sha256:20f5dfedc4b2f989ad022ba7aa697f5986c28841a44068ab76a2cacd1d06fe83"
-        url = f"https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/{name}"
+        updated_at = datetime.datetime(
+            2025, 8, 21, 20, 0, 38, tzinfo=datetime.timezone.utc
+        )
+        digest = (
+            "sha256:20f5dfedc4b2f989ad022ba7aa697f5986c28841a44068ab76a2cacd1d06fe83"
+        )
+        url = f"{BASE_URL}/{name}"
         version = "TKT v6.16-tkt — GHCI Prebuilt Diet Kernel"
         tag = "v6.16-tkt"
 
@@ -95,8 +110,10 @@ class TestFileData:
         name = "Debian-linux-diet-eevdf-gcc.tar.gz"
         size = FileSize(564559951)
         updated_at = datetime.datetime(2025, 8, 21, 20, 1, tzinfo=datetime.timezone.utc)
-        digest = "sha256:5434fd4289962cfbab5bcee6074c5514e82ea6c94d878d6e5aa71605128dd23d"
-        url = f"https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/{name}"
+        digest = (
+            "sha256:5434fd4289962cfbab5bcee6074c5514e82ea6c94d878d6e5aa71605128dd23d"
+        )
+        url = f"{BASE_URL}/{name}"
         version = "TKT v6.16-tkt — GHCI Prebuilt Diet Kernel"
         tag = "v6.16-tkt"
 
@@ -128,25 +145,74 @@ class TestFileData:
 
 
 class TestFunctions:
+    fetch_url = "https://api.github.com/repos/The-Kernel-Toolkit/TKT/releases"
+
     def test_filename_from_url(self):
         name = "Arch-linux-bore-gcc.tar.gz"
-        url = f"https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/{name}"
+        url = f"{BASE_URL}/{name}"
         result = filename_from_url(url)
         assert result == name
 
         # test with id
         name = "Debian-linux-diet-eevdf-gcc.tar.gz"
-        url = f"https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/{name}#releases"
+        url = f"{BASE_URL}/{name}#releases"
         result = filename_from_url(url)
         assert result == name
 
         # test with query parameters
         name = "Fedora-linux-diet-eevdf-gcc.tar.gz"
-        url = f"https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/{name}?distro=fedora"
+        url = f"{BASE_URL}/{name}?distro=fedora"
         result = filename_from_url(url)
         assert result == name
 
         # test with empty path
-        url = "https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt/"
+        url = f"{BASE_URL}/"
         result = filename_from_url(url)
         assert result == "downloaded.file"
+
+    def test_cached_fetch(self, mocker):
+        def mkdir(*args, **kwargs):
+            pass
+
+        class Response:
+            def raise_for_status(self): ...
+            def json(self): ...
+
+        mocker.patch.object(Path, "mkdir", mkdir)
+        mocker.patch.object(Path, "exists", return_value=True)
+        mocker.patch.object(time, "time", return_value=1758321426.128208)
+
+        with open("tests/releases.json") as file:
+            data = json.load(file)
+            response = Response()
+
+            mocker.patch.dict(os.environ, {})
+            mocker.patch.object(Path, "read_text", return_value=data)
+            mocker.patch.object(requests, "get", return_value=response)
+            mocker.patch.object(response, "json", return_value=data)
+
+        releases = cached_fetch(self.fetch_url, "kernel_releases")
+
+        assert releases.is_ok
+        match releases:
+            case Ok(release_list):
+                assert len(release_list) == 16
+                for release in release_list:
+                    assert isinstance(release, dict)
+                    assert "name" in release
+                    assert "version" in release
+                    assert "tag" in release
+                    assert "size" in release
+                    assert "updated_at" in release
+                    assert "digest" in release
+                    assert "url" in release
+
+                    assert isinstance(release["name"], str)
+                    assert isinstance(release["version"], str)
+                    assert isinstance(release["tag"], str)
+                    assert isinstance(release["size"], int)
+                    assert isinstance(release["updated_at"], str)
+                    assert isinstance(release["digest"], str)
+                    assert isinstance(release["url"], str)
+            case _:
+                raise AssertionError("Releases list was not properly mocked")
