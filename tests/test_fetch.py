@@ -9,7 +9,7 @@ import pytest
 import requests
 
 from TKT.fetch import FileData, FileSize, cached_fetch, filename_from_url
-from TKT.safe import Ok
+from TKT.safe import Err, Ok
 
 BASE_URL: Final[str] = (
     "https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt"
@@ -193,7 +193,6 @@ class TestFunctions:
 
         releases = cached_fetch(self.fetch_url, "kernel_releases")
 
-        assert releases.is_ok
         match releases:
             case Ok(release_list):
                 assert len(release_list) == 16
@@ -214,5 +213,7 @@ class TestFunctions:
                     assert isinstance(release["updated_at"], str)
                     assert isinstance(release["digest"], str)
                     assert isinstance(release["url"], str)
-            case _:
-                raise AssertionError("Releases list was not properly mocked")
+            case Err(error) if isinstance(error, FileNotFoundError):
+                raise AssertionError(f"culprit: {error.filename!r}") from error
+            case Err(error):
+                raise error
