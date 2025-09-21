@@ -119,7 +119,7 @@ def cached_fetch(url: str, name: str, ttl: int = 3600) -> Any:
             timestamp = cached.get("timestamp", 0)
             if now - timestamp < ttl:
                 return cached["data"]
-        except (json.JSONDecodeError, KeyError, TypeError):
+        except (json.JSONDecodeError, KeyError, TypeError, FileNotFoundError):
             pass  # treat as cache miss
 
     response = requests.get(url)
