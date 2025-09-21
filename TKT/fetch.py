@@ -23,6 +23,7 @@ depending on a database or external cache service.
 
 import json
 import os
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -71,9 +72,6 @@ class FileSize(int):
         self._bytes += other
         return self
 
-    def __eq__(self, other: Any) -> bool:
-        return self._bytes == other
-
 
 @dataclass(frozen=True)
 class FileData:
@@ -88,14 +86,15 @@ class FileData:
     scheduler: str = field(init=False)
     compiler: str = field(init=False)
 
+    _pattern = re.compile(r"[-.]")
+
     def __post_init__(self):
-        parts = self.name.replace("-diet", "").split("-")
+        parts = self._pattern.split(self.name.replace("-diet", ""))
         if len(parts) < 4:
             raise ValueError(f"Unexpected file name format: {self.name}")
-        compiler = parts[3].split(".")[0]
         object.__setattr__(self, "distro", parts[0])
         object.__setattr__(self, "scheduler", parts[2])
-        object.__setattr__(self, "compiler", compiler)
+        object.__setattr__(self, "compiler", parts[3])
 
 
 def filename_from_url(url: str) -> str:

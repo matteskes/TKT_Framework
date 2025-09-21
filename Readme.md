@@ -69,15 +69,10 @@ python -m TKT
 ### Development
 
 * **`make test`**
-  Runs the test suite with `pytest`. You can choose specific test files by
-  using the `PYTEST_FILES` macro.
+  Runs the test suite with `pytest`.
 
 * **`make coverage`**
-  Run coverage tests. Regular test results will not show up. If you set the
-  macro `COV_REPORT=html`, it opens an http server with the coverage results.
-
-* **`make coverage test`**
-  Run unit and coverage tests at the same time.
+  Run coverage tests. Regular test results will not show up.
 
 * **`make typecheck`**
   Performs static type checking using `mypy`.

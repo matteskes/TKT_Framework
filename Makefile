@@ -10,7 +10,6 @@ MYPY   = $(VENV)/bin/$(PYTHON) -m mypy
 RUFF   = $(VENV)/bin/$(PYTHON) -m ruff
 BLACK  = $(VENV)/bin/$(PYTHON) -m black
 ISORT  = $(VENV)/bin/$(PYTHON) -m isort
-SERVER = $(VENV)/bin/$(PYTHON) -m http.server
 
 PYTEST_FLAGS = --verbose
 PYTEST_FILES = tests
@@ -33,8 +32,7 @@ $(VENV): requirements.txt
 ifneq (,$(and $(filter test,$(MAKECMDGOALS)),$(filter coverage,$(MAKECMDGOALS))))
 # run test and coverage rules at the same time
 test:
-	-$(PYTEST) --cov=$(COVERAGE_DIR) --cov-report=$(COV_REPORT) $(PYTEST_FLAGS) $(PYTEST_FILES)
-	$(if $(findstring html,$(COV_REPORT)), $(SERVER) -d htmlcov $(PORT))
+	$(PYTEST) --cov=$(COVERAGE_DIR) --cov-report=$(COV_REPORT) $(PYTEST_FLAGS) $(PYTEST_FILES)
 coverage:
 	@:
 else
@@ -42,8 +40,7 @@ else
 test: $(VENV)
 	$(PYTEST) $(PYTEST_FLAGS) $(PYTEST_FILES)
 coverage: $(VENV)
-	-$(PYTEST) --cov=$(COVERAGE_DIR) --cov-report=$(COV_REPORT) $(TEST_DIR)
-	$(if $(findstring html,$(COV_REPORT)), $(SERVER) -d htmlcov $(PORT))
+	$(PYTEST) --cov=$(COVERAGE_DIR) --cov-report=$(COV_REPORT) $(TEST_DIR)
 endif
 
 typecheck: $(VENV)
