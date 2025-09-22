@@ -113,14 +113,14 @@ def cached_fetch(url: str, name: str, ttl: int = 3600) -> Any:
     cache_file = app_dir / f"{name}.json"
 
     now = time.time()
-    if cache_file.exists():
-        try:
-            cached = json.loads(cache_file.read_text())
-            timestamp = cached.get("timestamp", 0)
-            if now - timestamp < ttl:
-                return cached["data"]
-        except (json.JSONDecodeError, KeyError, TypeError, FileNotFoundError):
-            pass  # treat as cache miss
+
+    try:
+        cached = json.loads(cache_file.read_text())
+        timestamp = cached.get("timestamp", 0)
+        if now - timestamp < ttl:
+            return cached["data"]
+    except (json.JSONDecodeError, KeyError, TypeError, FileNotFoundError):
+        pass  # treat as cache miss
 
     response = requests.get(url)
     response.raise_for_status()
