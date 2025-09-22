@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import time
+from io import StringIO
 from pathlib import Path
 from typing import Final
 
@@ -9,11 +10,19 @@ import pytest
 import requests
 
 from TKT.fetch import FileData, FileSize, cached_fetch, filename_from_url
-from TKT.safe import Ok
+from TKT.safe import Err, Ok
 
 BASE_URL: Final[str] = (
     "https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt"
 )
+
+
+def no_op(*args, **kwargs): ...
+
+
+class Response:
+    def raise_for_status(self): ...
+    def json(self): ...
 
 
 class TestFileSize:
@@ -147,6 +156,11 @@ class TestFileData:
 class TestFunctions:
     fetch_url = "https://api.github.com/repos/The-Kernel-Toolkit/TKT/releases"
 
+    with open("tests/releases.json") as file:
+        buf = StringIO()
+        data = json.load(file)
+        json.dump({"data": data, "timestamp": 0.0}, buf, ensure_ascii=False)
+
     def test_filename_from_url(self):
         name = "Arch-linux-bore-gcc.tar.gz"
         url = f"{BASE_URL}/{name}"
@@ -170,30 +184,23 @@ class TestFunctions:
         result = filename_from_url(url)
         assert result == "downloaded.file"
 
-    def test_cached_fetch(self, mocker):
-        def mkdir(*args, **kwargs):
-            pass
+    def test_cached_fetch_with_fresh_data(self, mocker):
+        response = Response()
 
-        class Response:
-            def raise_for_status(self): ...
-            def json(self): ...
+        # lower than 3600 (one hour)
+        now = 1800.0
 
-        mocker.patch.object(Path, "mkdir", mkdir)
+        mocker.patch.dict(os.environ, {})
+        mocker.patch.object(Path, "mkdir", no_op)
         mocker.patch.object(Path, "exists", return_value=True)
-        mocker.patch.object(time, "time", return_value=1758321426.128208)
-
-        with open("tests/releases.json") as file:
-            data = json.load(file)
-            response = Response()
-
-            mocker.patch.dict(os.environ, {})
-            mocker.patch.object(Path, "read_text", return_value=data)
-            mocker.patch.object(requests, "get", return_value=response)
-            mocker.patch.object(response, "json", return_value=data)
+        mocker.patch.object(time, "time", return_value=now)
+        mocker.patch.object(Path, "read_text", return_value=self.buf.getvalue())
+        mocker.patch.object(Path, "write_text", no_op)
+        mocker.patch.object(requests, "get", return_value=response)
+        mocker.patch.object(response, "json", return_value=self.data)
 
         releases = cached_fetch(self.fetch_url, "kernel_releases")
 
-        assert releases.is_ok
         match releases:
             case Ok(release_list):
                 assert len(release_list) == 16
@@ -214,5 +221,83 @@ class TestFunctions:
                     assert isinstance(release["updated_at"], str)
                     assert isinstance(release["digest"], str)
                     assert isinstance(release["url"], str)
-            case _:
-                raise AssertionError("Releases list was not properly mocked")
+            case Err(error):
+                raise error
+
+    def test_cached_fetch_with_stale_data(self, mocker):
+        response = Response()
+
+        # greater than 3600 (one hour)
+        now = 5400.0
+
+        mocker.patch.dict(os.environ, {})
+        mocker.patch.object(Path, "mkdir", no_op)
+        mocker.patch.object(Path, "exists", return_value=True)
+        mocker.patch.object(time, "time", return_value=now)
+        mocker.patch.object(Path, "read_text", return_value=self.buf.getvalue())
+        mocker.patch.object(Path, "write_text", no_op)
+        mocker.patch.object(requests, "get", return_value=response)
+        mocker.patch.object(response, "json", return_value=self.data)
+
+        releases = cached_fetch(self.fetch_url, "kernel_releases")
+
+        match releases:
+            case Ok(release_list):
+                assert len(release_list) == 16
+                for release in release_list:
+                    assert isinstance(release, dict)
+                    assert "name" in release
+                    assert "version" in release
+                    assert "tag" in release
+                    assert "size" in release
+                    assert "updated_at" in release
+                    assert "digest" in release
+                    assert "url" in release
+
+                    assert isinstance(release["name"], str)
+                    assert isinstance(release["version"], str)
+                    assert isinstance(release["tag"], str)
+                    assert isinstance(release["size"], int)
+                    assert isinstance(release["updated_at"], str)
+                    assert isinstance(release["digest"], str)
+                    assert isinstance(release["url"], str)
+            case Err(error):
+                raise error
+
+    def test_cached_fetch_with_cache_miss(self, mocker):
+        response = Response()
+        now = 3600.0
+
+        mocker.patch.dict(os.environ, {})
+        mocker.patch.object(Path, "mkdir", no_op)
+        mocker.patch.object(Path, "exists", return_value=True)
+        mocker.patch.object(time, "time", return_value=now)
+        mocker.patch.object(Path, "read_text", side_effect=FileNotFoundError)
+        mocker.patch.object(Path, "write_text", no_op)
+        mocker.patch.object(requests, "get", return_value=response)
+        mocker.patch.object(response, "json", return_value=self.data)
+
+        releases = cached_fetch(self.fetch_url, "kernel_releases")
+
+        match releases:
+            case Ok(release_list):
+                assert len(release_list) == 16
+                for release in release_list:
+                    assert isinstance(release, dict)
+                    assert "name" in release
+                    assert "version" in release
+                    assert "tag" in release
+                    assert "size" in release
+                    assert "updated_at" in release
+                    assert "digest" in release
+                    assert "url" in release
+
+                    assert isinstance(release["name"], str)
+                    assert isinstance(release["version"], str)
+                    assert isinstance(release["tag"], str)
+                    assert isinstance(release["size"], int)
+                    assert isinstance(release["updated_at"], str)
+                    assert isinstance(release["digest"], str)
+                    assert isinstance(release["url"], str)
+            case Err(error):
+                raise error
