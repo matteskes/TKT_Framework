@@ -39,6 +39,7 @@ else:
         Generic,
         TypeVar,
     )
+
     from typing_extensions import NoReturn, ParamSpec, TypeAlias
 
     Never = NoReturn  # type: ignore[assignment,misc]
