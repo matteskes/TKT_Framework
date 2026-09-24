@@ -1,7 +1,7 @@
 # runtime dependencies
 textual==6.1.0
 tomlkit>=0.12.0
-requests==2.32.5
+requests==2.33.0
 
 # dev dependencies
 mypy==1.17.1
