@@ -697,3 +697,107 @@ CONFIG_BAZ=""
         path = config.get_saved_config_path(output_dir="/tmp/configs")
 
         assert path == "/tmp/configs/unknown-5.15.config"
+
+
+class TestReadConfigWithComments:
+    """Test KernelConfig.read_config() with comment lines."""
+
+    @pytest.fixture
+    def temp_kernel_dir(self):
+        """Create a temporary directory that mimics a kernel source tree."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            kernel_dir = Path(temp_dir) / "linux-6.16"
+            kernel_dir.mkdir()
+
+            # Create essential kernel source files
+            (kernel_dir / "Kconfig").write_text("# Kernel configuration")
+            (kernel_dir / "Makefile").write_text("# Kernel Makefile")
+            (kernel_dir / "init").mkdir()
+
+            # Create a .config file with comments
+            config_content = "# This is a comment\n# Another comment\nCONFIG_FOO=y\n// Another style comment\nCONFIG_BAR=m\nCONFIG_BAZ=\"\"\n# Final comment\n"
+            (kernel_dir / ".config").write_text(config_content)
+
+            yield kernel_dir
+
+    def test_read_config_skips_comments(self, temp_kernel_dir):
+        """Test that read_config skips comment lines."""
+        config = KernelConfig(str(temp_kernel_dir), "6.16")
+        result = config.read_config()
+
+        assert len(result) == 3  # Only the 3 non-comment lines
+        assert result["CONFIG_FOO"] == "y"
+        assert result["CONFIG_BAR"] == "m"
+        assert result["CONFIG_BAZ"] == '""'
+        assert "#" not in result
+
+
+class TestApplyConfigChangesRestore:
+    """Test KernelConfig.apply_config_changes() restore path."""
+
+    @pytest.fixture
+    def temp_kernel_dir(self):
+        """Create a temporary directory that mimics a kernel source tree."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            kernel_dir = Path(temp_dir) / "linux-6.16"
+            kernel_dir.mkdir()
+
+            (kernel_dir / "Kconfig").write_text("# Kernel configuration")
+            (kernel_dir / "Makefile").write_text("# Kernel Makefile")
+            (kernel_dir / "init").mkdir()
+
+            # Create a .config file and a backup
+            (kernel_dir / ".config").write_text("CONFIG_FOO=y")
+            (kernel_dir / ".config.backup").write_text("CONFIG_FOO=n")
+
+            yield kernel_dir
+
+    def test_apply_config_changes_restore_on_modify_failure(self, temp_kernel_dir):
+        """Test that apply_config_changes restores .config when modify_config fails."""
+        config = KernelConfig(str(temp_kernel_dir), "6.16")
+
+        # Mock modify_config to return False (triggering restore)
+        with patch.object(config, "modify_config", return_value=False):
+            success, message = config.apply_config_changes({"CONFIG_FOO": "n"})
+
+            assert success is False
+            assert "failed" in message.lower()
+
+            # Verify .config was restored from backup
+            restored_content = (temp_kernel_dir / ".config").read_text()
+            backup_content = (temp_kernel_dir / ".config.backup").read_text()
+            assert restored_content == backup_content
+
+
+class TestSaveConfigToFileException:
+    """Test KernelConfig.save_config_to_file() exception path."""
+
+    @pytest.fixture
+    def temp_kernel_dir(self):
+        """Create a temporary directory that mimics a kernel source tree."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            kernel_dir = Path(temp_dir) / "linux-6.16"
+            kernel_dir.mkdir()
+
+            (kernel_dir / "Kconfig").write_text("# Kernel configuration")
+            (kernel_dir / "Makefile").write_text("# Kernel Makefile")
+            (kernel_dir / "init").mkdir()
+
+            (kernel_dir / ".config").write_text("CONFIG_FOO=y")
+
+            yield kernel_dir
+
+    def test_save_config_to_file_exception(self, temp_kernel_dir):
+        """Test save_config_to_file when shutil.copy2 raises an exception."""
+        config = KernelConfig(str(temp_kernel_dir), "6.16")
+
+        with tempfile.TemporaryDirectory() as output_dir:
+            # Mock shutil.copy2 to raise OSError
+            with patch("shutil.copy2", side_effect=OSError("permission denied")):
+                success, message = config.save_config_to_file(
+                    output_dir=output_dir, distro="test"
+                )
+
+                assert success is False
+                assert "error" in message.lower()
+                assert "permission" in message.lower()
