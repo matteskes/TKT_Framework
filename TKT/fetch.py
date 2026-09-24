@@ -89,13 +89,28 @@ class FileData:
     compiler: str = field(init=False)
 
     def __post_init__(self):
-        parts = self.name.replace("-diet", "").split("-")
-        if len(parts) < 4:
-            raise ValueError(f"Unexpected file name format: {self.name}")
-        compiler = parts[3].split(".")[0]
-        object.__setattr__(self, "distro", parts[0])
-        object.__setattr__(self, "scheduler", parts[2])
-        object.__setattr__(self, "compiler", compiler)
+        # Try to parse distro, scheduler, and compiler from filename
+        # Expected format: {distro}-{version}-{scheduler}-{compiler[.version]}...
+        name_for_parsing = self.name.replace("-diet", "")
+        parts = name_for_parsing.split("-")
+
+        # Fallback: use explicit fields or derive from name if possible
+        if len(parts) >= 4:
+            object.__setattr__(self, "distro", parts[0])
+            object.__setattr__(self, "scheduler", parts[2])
+            # Compiler may have a version suffix (e.g., "gcc.13")
+            compiler_raw = parts[3].split(".")[0]
+            object.__setattr__(self, "compiler", compiler_raw)
+        elif len(parts) >= 3:
+            # Minimal format: {distro}-{version}-{scheduler}...
+            object.__setattr__(self, "distro", parts[0])
+            object.__setattr__(self, "scheduler", parts[2])
+            object.__setattr__(self, "compiler", "unknown")
+        else:
+            # Cannot parse — use empty defaults (e.g., empty string gives [''])
+            object.__setattr__(self, "distro", "")
+            object.__setattr__(self, "scheduler", "")
+            object.__setattr__(self, "compiler", "")
 
 
 def filename_from_url(url: str) -> str:
@@ -133,7 +148,7 @@ def cached_fetch(url: str, name: str, ttl: int = 3600) -> Any:
 
 
 @safe
-def download_file(url: str, output: str | None = None, quiet: bool = False) -> str:
+def download_file(url: str, output: "str | None" = None, quiet: bool = False) -> str:
     with requests.get(url, stream=True) as response:
         response.raise_for_status()
         output_file = output if output else filename_from_url(url)

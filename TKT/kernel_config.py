@@ -18,7 +18,7 @@ Design:
 """
 
 import shutil
-import subprocess as sp
+import subprocess
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -111,7 +111,7 @@ class KernelConfig:
         self.add_status("No .config found, running 'make defconfig'...")
 
         try:
-            result = sp.run(
+            result = subprocess.run(
                 ["make", "defconfig"],
                 cwd=self.kernel_source_dir,
                 capture_output=True,
@@ -126,7 +126,7 @@ class KernelConfig:
                 self.add_status(f"make defconfig failed: {result.stderr}")
                 return False
 
-        except sp.TimeoutExpired:
+        except subprocess.TimeoutExpired:
             self.add_status("make defconfig timed out after 5 minutes")
             return False
         except Exception as e:
@@ -277,7 +277,7 @@ class KernelConfig:
         self.add_status("Running 'make olddefconfig' to resolve dependencies...")
 
         try:
-            result = sp.run(
+            result = subprocess.run(
                 ["make", "olddefconfig"],
                 cwd=self.kernel_source_dir,
                 capture_output=True,
@@ -294,7 +294,7 @@ class KernelConfig:
                 self.add_status(error_msg)
                 return False, error_msg
 
-        except sp.TimeoutExpired:
+        except subprocess.TimeoutExpired:
             error_msg = "make olddefconfig timed out after 3 minutes"
             self.add_status(error_msg)
             return False, error_msg

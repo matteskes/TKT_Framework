@@ -28,16 +28,18 @@ Design:
 
 import json
 import os
+import sys
 from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Never,
-    ParamSpec,
-    TypeAlias,
-    TypeVar,
-)
+
+if sys.version_info >= (3, 11):
+    from typing import Never, ParamSpec, TypeAlias, Union
+else:
+    from typing import Any, Callable, Generic, TypeVar, Union
+
+    # Python < 3.11 fallbacks
+    from typing_extensions import ParamSpec, TypeAlias  # type: ignore[import-not-found]
+
+    Never = None  # type: ignore[assignment,misc]
 
 T = TypeVar("T", covariant=True)
 U = TypeVar("U")
@@ -97,7 +99,7 @@ class BaseResult(ABC, Generic[T, E]):
         """
 
     @abstractmethod
-    def unwrap_or(self, default: U, /) -> T | U:
+    def unwrap_or(self, default: U, /) -> "Union[T, U]":
         """
         Return the contained value if Ok; otherwise return `default`.
         """
@@ -141,12 +143,12 @@ class BaseResult(ABC, Generic[T, E]):
 
     @property
     @abstractmethod
-    def ok(self) -> T | None:
+    def ok(self) -> "T | None":
         """Return the contained value if Ok, otherwise None."""
 
     @property
     @abstractmethod
-    def err(self) -> E | None:
+    def err(self) -> "E | None":
         """Return the contained error if Err, otherwise None."""
 
 
@@ -174,11 +176,9 @@ class Ok(BaseResult[T, Any]):
         return self
 
     def __eq__(self, other: Any, /) -> bool:
-        match other:
-            case Ok(value):
-                return self.ok == value
-            case _:
-                return False
+        if isinstance(other, Ok):
+            return self.ok == other.ok
+        return False
 
     def __repr__(self) -> str:
         """Return string representation: `Ok(value)`."""
@@ -244,11 +244,9 @@ class Err(BaseResult[Never, E]):
         return other
 
     def __eq__(self, other: Any, /) -> bool:
-        match other:
-            case Err(error):
-                return self.err == error
-            case _:
-                return False
+        if isinstance(other, Err):
+            return self._error == other._error
+        return False
 
     def __repr__(self) -> str:
         """Return string representation: `Err(error)`."""
@@ -290,7 +288,7 @@ class Err(BaseResult[Never, E]):
         return self._error
 
 
-Result: TypeAlias = Ok[Any] | Err[Any]
+Result: TypeAlias = "Ok[Any] | Err[Any]"
 
 
 class SafeFunction(Generic[P, T]):
@@ -306,12 +304,18 @@ class SafeFunction(Generic[P, T]):
             return Err(err)
 
 
-def safe(func: Callable[P, T]) -> Callable[P, T] | SafeFunction[P, T]:
+def safe(func: Callable[P, T]) -> SafeFunction[P, T]:
     """
     Decorator for functions that may raise exceptions, returning a Result.
-    It doesn't wrap any values and leaks any raised errors if the
-    TKT_DEBUG environment variable is set to "true".
+
+    When the ``TKT_DEBUG`` environment variable is set to ``"true"``,
+    the original function is returned unchanged (for debugging).
+    Otherwise the function is wrapped in a ``SafeFunction`` that
+    catches exceptions and returns a ``Result`` instead.
     """
     if json.loads(os.environ.get("TKT_DEBUG", "false")):
-        return func
+        # Return the original function for debugging — type ignores
+        # because we intentionally return a different type in this
+        # branch.
+        return func  # type: ignore[return-value]
     return SafeFunction(func)

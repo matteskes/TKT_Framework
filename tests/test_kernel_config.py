@@ -1,5 +1,5 @@
 import shutil
-import subprocess as sp
+import subprocess
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -155,7 +155,7 @@ class TestKernelConfig:
     @patch("subprocess.run")
     def test_ensure_config_exists_timeout(self, mock_run, kernel_config):
         """Test ensure_config_exists when make defconfig times out."""
-        mock_run.side_effect = sp.TimeoutExpired("make", 300)
+        mock_run.side_effect = subprocess.TimeoutExpired("make", 300)
 
         result = kernel_config.ensure_config_exists()
 
@@ -383,7 +383,7 @@ CONFIG_MODULES=y
     @patch("subprocess.run")
     def test_run_olddefconfig_timeout(self, mock_run, kernel_config):
         """Test olddefconfig timeout."""
-        mock_run.side_effect = sp.TimeoutExpired("make", 180)
+        mock_run.side_effect = subprocess.TimeoutExpired("make", 180)
 
         success, message = kernel_config.run_olddefconfig()
 

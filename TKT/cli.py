@@ -16,7 +16,11 @@ import importlib
 import os
 import platform
 import sys
-import tomllib
+
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[import-not-found,assignment]
 from types import ModuleType
 from typing import Any, Dict, Final
 
@@ -57,8 +61,11 @@ def get_supported_distribution_name() -> str:
         info = platform.freedesktop_os_release()
         if info["ID"] in SUPPORTED_DISTROS:
             return info["ID"]
-        elif info["ID_LIKE"] in SUPPORTED_DISTROS:
-            return info["ID_LIKE"]
+        # ID_LIKE is a space-separated string, check if any distro in it matches
+        id_like_distros = info.get("ID_LIKE", "").split()
+        for distro in id_like_distros:
+            if distro in SUPPORTED_DISTROS:
+                return distro
     except AttributeError:
         raise RuntimeError("Cannot get distribution name")
     except KeyError:
@@ -68,7 +75,7 @@ def get_supported_distribution_name() -> str:
 
 
 # Dynamically load the distribution-specific library
-def load_library(lib_name: str) -> ModuleType | None:
+def load_library(lib_name: str) -> "ModuleType | None":
     """Dynamically import a library by name, or return None if not found."""
     try:
         return importlib.import_module(lib_name)
@@ -82,23 +89,34 @@ def choose_backend(config: Dict[str, Any], config_path: str) -> tuple[str, bool]
     if "settings" not in config:
         config["settings"] = {}
 
-    # Add default backend if missing
+    # Add default backend if missing, but only on Linux
     if "backend" not in config["settings"]:
-        distro = get_distribution_name()
-        default_backend = f"kernel_lib_{distro}"
-        config["settings"]["backend"] = default_backend
+        if sys.platform == "linux":
+            try:
+                distro = get_distribution_name()
+                default_backend = f"kernel_lib_{distro}"
+                config["settings"]["backend"] = default_backend
 
-        # Persist the setting back to settings.toml
-        with open(config_path, "w") as f:
-            tomlkit.dump(config, f)
+                # Persist the setting back to settings.toml
+                with open(config_path, "w") as f:
+                    tomlkit.dump(config, f)
+            except (RuntimeError, OSError):
+                # Cannot determine distro or write config, leave backend unset
+                config["settings"]["backend"] = ""
+        else:
+            # Non-Linux platforms don't have a default backend
+            config["settings"]["backend"] = ""
 
     backend = config["settings"]["backend"]
 
     # Check if distro is supported by distro_configs
     try:
-        distro = get_distribution_name()
-        get_distro_configs(distro)  # This will raise ValueError if unsupported
-        distro_supported = True
+        if sys.platform == "linux":
+            distro = get_distribution_name()
+            get_distro_configs(distro)  # This will raise ValueError if unsupported
+            distro_supported = True
+        else:
+            distro_supported = False
     except ValueError:
         distro_supported = False
 
