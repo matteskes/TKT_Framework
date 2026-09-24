@@ -30,9 +30,12 @@ import os
 import sys
 from abc import ABC, abstractmethod
 
-if sys.version_info >= (3, 11):
+# Backwards-compatible typing imports
+try:
+    # Python 3.11+: Never, TypeAlias are in typing
     from typing import Any, Never, ParamSpec, TypeAlias, TypeVar
-else:
+except ImportError:
+    # Python < 3.11: use typing_extensions for missing types
     from collections.abc import Callable
     from typing import (
         Any,

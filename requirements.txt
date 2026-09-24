@@ -12,3 +12,4 @@ black>=25.11.0,<26
 isort==6.0.1
 ruff==0.12.12
 types-requests
+typing_extensions
