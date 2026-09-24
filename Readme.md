@@ -1,7 +1,7 @@
 # The Kernel Toolkit (TKT)
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Platform: Linux](https://img.shields.io/badge/platform-Linux-green.svg)](https://www.kernel.org/)
 
 A modern, user-friendly terminal application for compiling and managing custom Linux kernels across multiple distributions.
@@ -13,10 +13,11 @@ A modern, user-friendly terminal application for compiling and managing custom L
 - **Automated Dependency Installation**: One-command setup for kernel compilation dependencies
 - **Configuration Management**: TOML-based configuration for kernel versions and settings
 - **Extensible Architecture**: Plugin-style backend system for different distributions
+- **Kernel Source Fetching**: Automated downloading and management of kernel source code via HTTP
 
 ## Requirements
 
-* **Python 3.9+** (installed system-wide)
+* **Python 3.11+** (installed system-wide)
 * **Make** (standard on most Unix-like systems)
 * Linux operating system (supported: Arch, Debian, Ubuntu, Fedora)
 * Terminal with TTY support
@@ -73,8 +74,7 @@ python -m TKT
   using the `PYTEST_FILES` macro.
 
 * **`make coverage`**
-  Run coverage tests. Regular test results will not show up. If you set the
-  macro `COV_REPORT=html`, it opens an http server with the coverage results.
+  Run tests with coverage reporting. Set `COV_REPORT=html` to generate HTML reports and start a local server to view them.
 
 * **`make coverage test`**
   Run unit and coverage tests at the same time.
@@ -130,7 +130,6 @@ python -m TKT
 | Open SuSE | zypper | Planned |
 | Pop_OS! | apt | Planned |
 
-
 ## Configuration
 
 The application uses `settings.toml` for configuration:
@@ -156,17 +155,21 @@ backend = "kernel_lib_arch"  # Auto-detected based on distribution
 TKT/
 ├── __init__.py          # Package initialization
 ├── __main__.py          # Entry point
-├── cli.py              # Main application and UI logic
-├── distro_configs.py   # Distribution-specific configurations
-└── settings.toml       # Configuration file
+├── cli.py               # Main application and UI logic
+├── distro_configs.py    # Distribution-specific configurations
+├── fetch.py             # Kernel source fetching utilities
+├── kernel_config.py     # Kernel configuration management
+├── safe.py              # Safe execution utilities
+└── settings.toml        # Configuration file
 ```
 
 ## Dependencies
 
 ### Runtime Dependencies
-- `textual` - Terminal UI framework
-- `tomlkit` - TOML configuration handling
-- Standard library modules: `importlib`, `platform`, `subprocess`
+- `textual==6.1.0` - Terminal UI framework
+- `tomlkit>=0.12.0` - TOML configuration handling
+- `requests==2.33.0` - HTTP requests for kernel fetching
+- Standard library modules: `importlib`, `platform`, `subprocess`, `sys`, `os`
 
 ### System Dependencies (Auto-installed)
 The application automatically installs kernel compilation dependencies including:
@@ -175,9 +178,24 @@ The application automatically installs kernel compilation dependencies including
 - Development libraries (libssl-dev, libelf-dev, ncurses-dev)
 - Utilities (git, wget, rsync, tar)
 
-## Commands
+### CLI Entry Point
 
-### Interactive Commands
+The package can also be invoked via the `tkt` command after installation:
+
+```bash
+tkt
+```
+
+### Documentation
+
+Additional documentation is available in the `docs/` directory:
+
+- **[API Documentation](docs/API%20Documentation.md)** — Detailed API reference
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** — In-depth contribution and development guide
+
+## Interactive Commands
+
+### Available Commands
 - **Enter kernel version**: Select a kernel version for compilation (e.g., `6.16`)
 - **`deps` or `install-deps`**: Install kernel compilation dependencies
 - **`config:TYPE`**: Configure kernel (planned feature)
@@ -213,46 +231,17 @@ class DebianConfigs(DistroConfigs):
 
 ## Development
 
-### Setting up Development Environment
+### Code Quality Tools
 
-```bash
-# Clone and enter directory
-git clone https://github.com/matteskes/TKT_Framework.git
-cd TKT_Framework
+This project uses several code quality tools configured in `pyproject.toml`:
 
-# Install dependencies and set up environment
-make install
+- **mypy** — Static type checking
+- **ruff** — Linting and style checks
+- **black** — Code formatting
+- **isort** — Import sorting
+- **pytest** — Testing with coverage reporting
 
-# Or manually create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-### Development Workflow
-
-```bash
-# Run tests
-make test
-
-# Run with coverage
-make coverage
-
-# Type checking
-make typecheck
-
-# Linting
-make lint
-
-# Format code
-make format
-
-# Run all checks at once
-make check
-
-# Auto-fix linting issues (including unsafe fixes)
-make force-fix
-```
+Run all checks at once with `make check`. See the [Developer Guide](docs/DEVELOPER_GUIDE.md) for detailed contribution guidelines.
 
 ### Adding Distribution Support
 
@@ -275,7 +264,7 @@ make force-fix
 - **Solution**: The backend library is not implemented yet. This is expected for distributions under development.
 
 **Issue**: Application fails to start
-- **Solution**: Ensure you have Python 3.9+ and all dependencies installed. Run `make install` to set up the environment properly.
+- **Solution**: Ensure you have Python 3.11+ and all dependencies installed. Run `make install` to set up the environment properly.
 
 ### Logging
 
@@ -312,6 +301,10 @@ This project is licensed under the GNU General Public License v2.0 - see the [LI
 - **Issues**: [GitHub Issues](https://github.com/matteskes/TKT_Framework/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/matteskes/TKT_Framework/discussions)
 - **Documentation**: [Project Wiki](https://github.com/matteskes/TKT_Framework/wiki)
+
+### CI/CD
+
+This project uses GitHub Actions for continuous integration. The lint workflow (`.github/workflows/lint.yml`) runs automatically on pull requests to ensure code quality standards are met.
 
 ---
 
