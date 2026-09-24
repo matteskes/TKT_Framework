@@ -28,15 +28,12 @@ Design:
 import json
 import os
 from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Never,
-    ParamSpec,
-    TypeAlias,
-    TypeVar,
-)
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar
+
+from typing_extensions import NoReturn, ParamSpec, TypeAlias
+
+Never = NoReturn  # type: ignore[assignment,misc]
 
 T = TypeVar("T", covariant=True)
 U = TypeVar("U")
