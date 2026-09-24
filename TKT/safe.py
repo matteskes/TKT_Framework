@@ -31,7 +31,7 @@ import sys
 from abc import ABC, abstractmethod
 
 if sys.version_info >= (3, 11):
-    from typing import Never, ParamSpec, TypeAlias
+    from typing import Any, Never, ParamSpec, TypeAlias, TypeVar
 else:
     from collections.abc import Callable
     from typing import (
