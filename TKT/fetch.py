@@ -1,5 +1,4 @@
-"""
-Data fetching and caching utilities.
+"""Data fetching and caching utilities.
 
 This module provides two main functions:
 
@@ -71,7 +70,7 @@ class FileSize(int):
         self._bytes += other
         return self
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return self._bytes == other
 
 
@@ -142,7 +141,7 @@ def cached_fetch(url: str, name: str, ttl: int = 3600) -> Any:
     data = response.json()
 
     cache_file.write_text(
-        json.dumps({"timestamp": now, "data": data}, ensure_ascii=False)
+        json.dumps({"timestamp": now, "data": data}, ensure_ascii=False),
     )
     return data
 
@@ -200,7 +199,7 @@ def get_files_from_releases(releases: list[dict[str, Any]]) -> list[FileData]:
                     updated_at=datetime.fromisoformat(asset["updated_at"]),
                     digest=asset["digest"],
                     url=asset["browser_download_url"],
-                )
+                ),
             )
 
     return files

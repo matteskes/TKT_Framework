@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 2025-08-14
+"""Created on 2025-08-14
 
 @author: The Kernel Toolkit Project and contributors- (C) 2025.
 All respective rights reserved.
@@ -22,7 +20,7 @@ try:
 except ImportError:
     import tomli as tomllib  # type: ignore[import-not-found,assignment]
 from types import ModuleType
-from typing import Any, Dict, Final
+from typing import Any, Final
 
 import tomlkit
 from textual.app import App, ComposeResult
@@ -85,7 +83,7 @@ def load_library(lib_name: str) -> "ModuleType | None":
 
 
 # Enhanced backend chooser with distro config validation
-def choose_backend(config: Dict[str, Any], config_path: str) -> tuple[str, bool]:
+def choose_backend(config: dict[str, Any], config_path: str) -> tuple[str, bool]:
     """Ensure backend exists in config and validate distro support."""
     if "settings" not in config:
         config["settings"] = {}
@@ -118,7 +116,7 @@ def choose_backend(config: Dict[str, Any], config_path: str) -> tuple[str, bool]
             distro_supported = True
         else:
             distro_supported = False
-    except ValueError:
+    except (ValueError, RuntimeError):
         distro_supported = False
 
     return backend, distro_supported
@@ -146,11 +144,11 @@ class TKTSystemManager:
             self.distro_supported = False
 
     def install_dependencies(self) -> tuple[bool, str]:
-        """
-        Install required packages for kernel compilation.
+        """Install required packages for kernel compilation.
 
         Returns:
             tuple[bool, str]: (success, message)
+
         """
         if not self.distro_supported or not self.distro_config:
             return (
@@ -162,26 +160,25 @@ class TKTSystemManager:
             self.distro_config.update_and_install()
             return True, "Dependencies installed successfully"
         except Exception as e:
-            return False, f"Failed to install dependencies: {str(e)}"
+            return False, f"Failed to install dependencies: {e!s}"
 
     def _get_config_save_dir(self) -> str:
-        """
-        Return the XDG-compliant directory for saved kernel configs.
+        """Return the XDG-compliant directory for saved kernel configs.
 
         Returns
         -------
         str
             Path to ``~/.local/share/tkt/configs`` (or equivalent
             based on ``XDG_STATE_HOME`` / ``XDG_DATA_HOME``).
+
         """
         data_home = os.environ.get(
-            "XDG_DATA_HOME", os.path.join(os.path.expanduser("~"), ".local", "share")
+            "XDG_DATA_HOME", os.path.join(os.path.expanduser("~"), ".local", "share"),
         )
         return os.path.join(data_home, "tkt", "configs")
 
     def prepare_kernel_source(self, kernel_version: str) -> tuple[bool, str]:
-        """
-        Prepare kernel source for compilation, save the final resolved
+        """Prepare kernel source for compilation, save the final resolved
         .config, and hand off to the compiler.
 
         The workflow is:
@@ -199,11 +196,12 @@ class TKTSystemManager:
 
         Returns:
             tuple[bool, str]: (success, message)
+
         """
         # Step 1: Determine kernel source directory.
         # For now, use a predictable path under ~/.local/src.
         src_base = os.environ.get(
-            "XDG_DATA_HOME", os.path.join(os.path.expanduser("~"), ".local", "share")
+            "XDG_DATA_HOME", os.path.join(os.path.expanduser("~"), ".local", "share"),
         )
         kernel_source_dir = os.path.join(src_base, "tkt", "sources", f"linux-{kernel_version}")
 
@@ -233,10 +231,9 @@ class TKTSystemManager:
         )
 
     def configure_kernel(
-        self, kernel_version: str, config_type: str = "default"
+        self, kernel_version: str, config_type: str = "default",
     ) -> tuple[bool, str]:
-        """
-        Configure kernel for compilation (placeholder for future implementation).
+        """Configure kernel for compilation (placeholder for future implementation).
 
         Args:
             kernel_version: The kernel version to configure
@@ -244,6 +241,7 @@ class TKTSystemManager:
 
         Returns:
             tuple[bool, str]: (success, message)
+
         """
         # Placeholder for future kernel configuration logic
         return (
@@ -273,11 +271,11 @@ class KernelToolkitApp(App):
 
         # Get backend info with distro validation
         self.backend, self.backend_distro_supported = choose_backend(
-            self.config, self.config_path
+            self.config, self.config_path,
         )
         self.lib_module = load_library(self.backend)
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """Load TOML configuration file."""
         try:
             with open(self.config_path, "rb") as f:
@@ -302,13 +300,13 @@ class KernelToolkitApp(App):
                 Label(
                     "Welcome to The Kernel Toolkit",
                     id="welcome_title",
-                )
+                ),
             )
             yield Center(
                 Label(
                     "This program will help users compile and install your custom Linux kernel.",
                     id="welcome_subtext",
-                )
+                ),
             )
 
         # Distribution block
@@ -319,7 +317,7 @@ class KernelToolkitApp(App):
                     yield Label("Distribution supported for package management")
                 else:
                     yield Label(
-                        "Distribution not supported for automatic package management"
+                        "Distribution not supported for automatic package management",
                     )
             else:
                 yield Label("Could not detect distribution")
@@ -369,7 +367,7 @@ class KernelToolkitApp(App):
         # Input block
         with Vertical(id="input_block"):
             yield Label(
-                "Please enter the kernel version you want to build or a command:"
+                "Please enter the kernel version you want to build or a command:",
             )
             yield Input(
                 placeholder=(
@@ -400,11 +398,11 @@ class KernelToolkitApp(App):
         self.update_status(f"{'✓' if success else '✗'} {message}")
 
     def handle_command(self, command: str) -> bool:
-        """
-        Handle special commands.
+        """Handle special commands.
 
         Returns:
             bool: True if command was handled, False otherwise
+
         """
         command_lower = command.lower().strip()
 
@@ -417,15 +415,15 @@ class KernelToolkitApp(App):
             return True
 
         # Future commands can be added here
-        elif command_lower.startswith("config:"):
+        if command_lower.startswith("config:"):
             # Example: config:default, config:custom
             config_type = command_lower[7:]  # Remove 'config:'
             self.update_status(
-                f"Kernel configuration ({config_type}) would be implemented here"
+                f"Kernel configuration ({config_type}) would be implemented here",
             )
             return True
 
-        elif command_lower.startswith("prepare:"):
+        if command_lower.startswith("prepare:"):
             # Example: prepare:6.16
             kernel_version = command_lower[8:]  # Remove 'prepare:'
             success, message = self.system_manager.prepare_kernel_source(kernel_version)
@@ -464,7 +462,7 @@ class KernelToolkitApp(App):
         # Validate kernel version if kernels are defined
         if kernels and kernel_version not in kernels:
             self.update_status(
-                f" Kernel version {kernel_version} not in available list"
+                f" Kernel version {kernel_version} not in available list",
             )
         else:
             self.update_status(f" Kernel version {kernel_version} selected")

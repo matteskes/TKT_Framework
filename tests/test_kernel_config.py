@@ -129,7 +129,7 @@ class TestKernelConfig:
         assert result is True
         mock_run.assert_called_once_with(
             ["make", "defconfig"],
-            cwd=kernel_config.kernel_source_dir,
+            check=False, cwd=kernel_config.kernel_source_dir,
             capture_output=True,
             text=True,
             timeout=300,
@@ -363,7 +363,7 @@ CONFIG_MODULES=y
         assert "Successfully resolved config dependencies" in message
         mock_run.assert_called_once_with(
             ["make", "olddefconfig"],
-            cwd=kernel_config.kernel_source_dir,
+            check=False, cwd=kernel_config.kernel_source_dir,
             capture_output=True,
             text=True,
             timeout=180,

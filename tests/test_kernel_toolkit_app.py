@@ -16,7 +16,7 @@ class TestKernelToolkitApp:
         # Mock file operations
         mock_file_content = b""  # tomllib.load will be mocked separately
         mocker.patch("builtins.open", mock_open(read_data=mock_file_content))
-        mocker.patch("tomllib.load", return_value=config_content)
+        mocker.patch("TKT.cli.tomllib.load", return_value=config_content)
         mocker.patch("TKT.cli.choose_backend", return_value=("kernel_lib_arch", True))
         mocker.patch("TKT.cli.load_library", return_value=Mock())
         mocker.patch("TKT.cli.TKTSystemManager")

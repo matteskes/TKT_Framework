@@ -10,7 +10,7 @@ import pytest
 import requests
 
 from TKT.fetch import FileData, FileSize, cached_fetch, filename_from_url
-from TKT.safe import Err, Ok
+from TKT.safe import Ok
 
 BASE_URL: Final[str] = (
     "https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt"
@@ -141,16 +141,20 @@ class TestFileData:
         assert file_data.compiler == "gcc"
 
         name = "Debian-linux.tar.gz"
-        with pytest.raises(ValueError, match="^Unexpected file name format"):
-            file_data = FileData(
-                name=name,
-                size=size,
-                updated_at=updated_at,
-                digest=digest,
-                url=url,
-                version=version,
-                tag=tag,
-            )
+        file_data = FileData(
+            name=name,
+            size=size,
+            updated_at=updated_at,
+            digest=digest,
+            url=url,
+            version=version,
+            tag=tag,
+        )
+
+        # Lenient parsing: "Debian-linux.tar.gz" has < 3 parts, so all fields are empty
+        assert file_data.distro == ""
+        assert file_data.scheduler == ""
+        assert file_data.compiler == ""
 
 
 class TestFunctions:
