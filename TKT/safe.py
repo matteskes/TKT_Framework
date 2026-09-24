@@ -27,18 +27,16 @@ Design:
 
 import json
 import os
-import sys
 from abc import ABC, abstractmethod
-
-# Backwards-compatible typing imports
-try:
-    from typing import Any, Callable, Generic, Never, ParamSpec, TypeAlias, TypeVar
-except ImportError:
-    from typing import Any, Generic, TypeVar
-    from collections.abc import Callable
-    from typing_extensions import NoReturn, ParamSpec, TypeAlias
-
-    Never = NoReturn  # type: ignore[assignment,misc]
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Never,
+    ParamSpec,
+    TypeAlias,
+    TypeVar,
+)
 
 T = TypeVar("T", covariant=True)
 U = TypeVar("U")
