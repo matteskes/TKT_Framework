@@ -122,7 +122,7 @@ python -m TKT
 ## Supported Distributions
 
 | Distribution | Package Manager | Status |
-|:-------------|:----------------|:-------|
+| :------------- | :---------------- | :------- |
 | Arch Linux | pacman/makepkg | Supported |
 | Debian | apt | Supported |
 | Ubuntu | apt | Supported |
