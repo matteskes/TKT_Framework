@@ -24,19 +24,22 @@ This guide is for developers who want to contribute to The Kernel Toolkit (TKT) 
 
 ### Setting Up the Environment
 
-1. **Fork and clone the repository:**
+**1. Fork and clone the repository:**
+
 ```bash
 git clone https://github.com/yourusername/TKT_Framework.git
 cd TKT_Framework
 ```
 
-2. **Create virtual environment:**
+**2. Create virtual environment:**
+
 ```bash
 python -m venv tkt-dev
 source tkt-dev/bin/activate  # Windows: tkt-dev\Scripts\activate
 ```
 
-3. **Install development dependencies:**
+**3. Install development dependencies:**
+
 ```bash
 # Runtime dependencies
 pip install textual tomlkit
@@ -46,12 +49,14 @@ pip install pytest pytest-cov black flake8 mypy pre-commit
 pip install -e .
 ```
 
-4. **Set up pre-commit hooks:**
+**4. Set up pre-commit hooks:**
+
 ```bash
 pre-commit install
 ```
 
-5. **Verify setup:**
+**5. Verify setup:**
+
 ```bash
 python -m TKT  # Should launch the application
 pytest         # Should run tests (if any exist)
@@ -63,13 +68,13 @@ pytest         # Should run tests (if any exist)
 
 TKT follows a modular architecture with clear separation of concerns:
 
-```
+```text
 TKT/
-├── __init__.py          # Package metadata and version
-├── __main__.py          # Entry point and argument parsing  
-├── cli.py              # Main application logic and UI
-├── distro_configs.py   # Distribution-specific configurations
-└── settings.toml       # Runtime configuration
+    __init__.py          # Package metadata and version
+    __main__.py          # Entry point and argument parsing  
+    cli.py              # Main application logic and UI
+    distro_configs.py   # Distribution-specific configurations
+    settings.toml       # Runtime configuration
 ```
 
 ### Core Components
@@ -77,11 +82,13 @@ TKT/
 #### 1. Application Layer (`cli.py`)
 
 **`KernelToolkitApp`**: Main Textual application
+
 - Handles UI rendering and user interaction
 - Manages application state and configuration
 - Coordinates between system manager and UI components
 
 **`TKTSystemManager`**: System operations manager
+
 - Abstracts system-level operations
 - Handles distribution detection and validation
 - Manages dependency installation and kernel operations
@@ -89,11 +96,13 @@ TKT/
 #### 2. Distribution Layer (`distro_configs.py`)
 
 **`DistroConfigs`**: Abstract base class
+
 - Defines common interface for package management
 - Provides extensible architecture for new distributions
 - Handles base dependency definitions
 
 **Concrete implementations**: `ArchConfigs`, `DebianConfigs`, `UbuntuConfigs`
+
 - Distribution-specific package management logic
 - Custom dependency lists and installation procedures
 - Error handling for platform-specific issues
@@ -101,6 +110,7 @@ TKT/
 #### 3. Configuration Layer
 
 **TOML configuration**: `settings.toml`
+
 - User-configurable kernel versions and settings
 - Backend selection and validation
 - Persistent storage for user preferences
@@ -108,6 +118,7 @@ TKT/
 ### Design Patterns
 
 #### Factory Pattern
+
 ```python
 def get_distro_configs(name: str) -> DistroConfigs:
     """Factory function for distribution configurations."""
@@ -118,6 +129,7 @@ def get_distro_configs(name: str) -> DistroConfigs:
 ```
 
 #### Strategy Pattern
+
 ```python
 class TKTSystemManager:
     def __init__(self):
@@ -128,6 +140,7 @@ class TKTSystemManager:
 ```
 
 #### Template Method Pattern
+
 ```python
 class DistroConfigs(ABC):
     def update_and_install(self):
@@ -149,6 +162,7 @@ class DistroConfigs(ABC):
 TKT follows PEP 8 with some specific conventions:
 
 #### Import Organization
+
 ```python
 # Standard library imports
 import os
@@ -164,7 +178,9 @@ from TKT.distro_configs import get_distro_configs
 ```
 
 #### Type Hints
+
 All public functions must include type hints:
+
 ```python
 def get_distribution_name() -> str:
     """Returns the distribution name."""
@@ -174,7 +190,9 @@ def choose_backend(config: Dict[str, Any], config_path: str) -> tuple[str, bool]
 ```
 
 #### Docstrings
+
 Use Google-style docstrings:
+
 ```python
 def install_dependencies(self) -> tuple[bool, str]:
     """
@@ -189,7 +207,9 @@ def install_dependencies(self) -> tuple[bool, str]:
 ```
 
 #### Error Handling
+
 Prefer specific exceptions with descriptive messages:
+
 ```python
 # Good
 if not self.distro_supported:
@@ -203,7 +223,9 @@ if not self.distro_supported:
 ### Code Formatting
 
 #### Black Configuration
+
 Create `.pyproject.toml`:
+
 ```toml
 [tool.black]
 line-length = 88
@@ -218,10 +240,10 @@ extend-exclude = '''
 '''
 ```
 
-
 ### Pre-commit Configuration
 
 Create `.pre-commit-config.yaml`:
+
 ```yaml
 repos:
   - repo: https://github.com/psf/black
@@ -247,7 +269,7 @@ repos:
 
 TKT uses pytest for testing with the following structure:
 
-```
+```text
 tests/
 ├── __init__.py
 ├── conftest.py              # Shared fixtures
@@ -264,6 +286,7 @@ tests/
 ### Writing Tests
 
 #### Unit Tests
+
 ```python
 import pytest
 from unittest.mock import patch, MagicMock
@@ -299,6 +322,7 @@ class TestTKTSystemManager:
 ```
 
 #### Integration Tests
+
 ```python
 import tempfile
 import os
@@ -321,6 +345,7 @@ class TestApplicationIntegration:
 ```
 
 #### Mock Testing for UI
+
 ```python
 from textual.testing import AppTester
 from TKT.cli import KernelToolkitApp
@@ -341,6 +366,7 @@ def test_dependency_installation_ui():
 ### Test Configuration
 
 #### pytest.ini
+
 ```ini
 [tool:pytest]
 testpaths = tests
@@ -399,7 +425,8 @@ pytest tests/integration/
 ### Commit Messages
 
 Follow conventional commit format:
-```
+
+```text
 type(scope): description
 
 [optional body]
@@ -408,7 +435,8 @@ type(scope): description
 ```
 
 Examples:
-```
+
+```text
 feat(distro): add fedora support for package management
 
 - Implement FedoraConfigs class with dnf commands
@@ -418,7 +446,7 @@ feat(distro): add fedora support for package management
 Closes #123
 ```
 
-```
+```text
 fix(ui): resolve status message display issue
 
 The status label was not updating correctly after
@@ -465,6 +493,7 @@ Brief description of changes made.
 ### Example: Adding Kernel Configuration Feature
 
 #### 1. Define Interface
+
 ```python
 # In TKTSystemManager
 def configure_kernel(
@@ -485,6 +514,7 @@ def configure_kernel(
 ```
 
 #### 2. Implement Core Logic
+
 ```python
 def configure_kernel(self, kernel_version: str, config_type: str = "default") -> tuple[bool, str]:
     if not self.distro_supported:
@@ -511,6 +541,7 @@ def configure_kernel(self, kernel_version: str, config_type: str = "default") ->
 ```
 
 #### 3. Add UI Integration
+
 ```python
 # In KernelToolkitApp.handle_command
 elif command_lower.startswith("config:"):
@@ -532,6 +563,7 @@ elif command_lower.startswith("config:"):
 ```
 
 #### 4. Add Tests
+
 ```python
 class TestKernelConfiguration:
     def test_configure_kernel_default(self):
@@ -634,6 +666,7 @@ class TestNewDistroConfigs:
 #### Step 5: Update Documentation
 
 Update all relevant documentation:
+
 - README.md supported distributions table
 - User guide installation instructions
 - API documentation with new class
@@ -662,6 +695,7 @@ TKT uses semantic versioning (MAJOR.MINOR.PATCH):
 ### Release Checklist
 
 #### Pre-release
+
 - [ ] All tests pass on CI/CD
 - [ ] Documentation updated
 - [ ] Changelog updated
@@ -669,6 +703,7 @@ TKT uses semantic versioning (MAJOR.MINOR.PATCH):
 - [ ] Dependencies reviewed and updated
 
 #### Release
+
 - [ ] Create release branch: `release/vX.Y.Z`
 - [ ] Final testing on supported distributions
 - [ ] Create GitHub release with changelog
@@ -676,6 +711,7 @@ TKT uses semantic versioning (MAJOR.MINOR.PATCH):
 - [ ] Merge to main branch
 
 #### Post-release
+
 - [ ] Update development version
 - [ ] Close milestone on GitHub
 - [ ] Announce release in discussions
