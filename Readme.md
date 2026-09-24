@@ -1,7 +1,7 @@
 # The Kernel Toolkit (TKT)
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Platform: Linux](https://img.shields.io/badge/platform-Linux-green.svg)](https://www.kernel.org/)
 
 A modern, user-friendly terminal application for compiling and managing custom Linux kernels across multiple distributions.
@@ -16,7 +16,7 @@ A modern, user-friendly terminal application for compiling and managing custom L
 
 ## Requirements
 
-* **Python 3.11+** (installed system-wide)
+* **Python 3.9+** (installed system-wide)
 * **Make** (standard on most Unix-like systems)
 * Linux operating system (supported: Arch, Debian, Ubuntu, Fedora)
 * Terminal with TTY support
@@ -275,7 +275,7 @@ make force-fix
 - **Solution**: The backend library is not implemented yet. This is expected for distributions under development.
 
 **Issue**: Application fails to start
-- **Solution**: Ensure you have Python 3.10+ and all dependencies installed. Run `make install` to set up the environment properly.
+- **Solution**: Ensure you have Python 3.9+ and all dependencies installed. Run `make install` to set up the environment properly.
 
 ### Logging
 
