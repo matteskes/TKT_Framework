@@ -39,10 +39,9 @@ else:
         Generic,
         TypeVar,
     )
+    from typing_extensions import NoReturn, ParamSpec, TypeAlias
 
-    from typing_extensions import ParamSpec, TypeAlias
-
-    Never = None  # type: ignore[assignment,misc]
+    Never = NoReturn  # type: ignore[assignment,misc]
 
 T = TypeVar("T", covariant=True)
 U = TypeVar("U")

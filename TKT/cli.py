@@ -16,7 +16,7 @@ import platform
 import sys
 
 try:
-    import tomllib
+    import tomllib  # type: ignore[import-not-found]
 except ImportError:
     import tomli as tomllib  # type: ignore[import-not-found,assignment]
 from types import ModuleType
