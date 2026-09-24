@@ -32,6 +32,7 @@ from textual.widgets import Input, Label
 
 # Import distro_configs for package management
 from TKT.distro_configs import get_distro_configs
+from TKT.kernel_config import KernelConfig
 
 SUPPORTED_DISTROS: Final[list[str]] = [
     "debian",
@@ -163,9 +164,35 @@ class TKTSystemManager:
         except Exception as e:
             return False, f"Failed to install dependencies: {str(e)}"
 
+    def _get_config_save_dir(self) -> str:
+        """
+        Return the XDG-compliant directory for saved kernel configs.
+
+        Returns
+        -------
+        str
+            Path to ``~/.local/share/tkt/configs`` (or equivalent
+            based on ``XDG_STATE_HOME`` / ``XDG_DATA_HOME``).
+        """
+        data_home = os.environ.get(
+            "XDG_DATA_HOME", os.path.join(os.path.expanduser("~"), ".local", "share")
+        )
+        return os.path.join(data_home, "tkt", "configs")
+
     def prepare_kernel_source(self, kernel_version: str) -> tuple[bool, str]:
         """
-        Prepare kernel source for compilation (placeholder for future implementation).
+        Prepare kernel source for compilation, save the final resolved
+        .config, and hand off to the compiler.
+
+        The workflow is:
+
+        1. Determine the kernel source directory (downloaded or
+           pre-existing).
+        2. Run ``KernelConfig`` to generate/finalize the .config via
+           ``make olddefconfig``.
+        3. Save the final resolved configuration to a persistent
+           location under ``~/.local/share/tkt/configs/``.
+        4. Hand off the saved config to the backend compiler library.
 
         Args:
             kernel_version: The kernel version to prepare
@@ -173,8 +200,37 @@ class TKTSystemManager:
         Returns:
             tuple[bool, str]: (success, message)
         """
-        # Placeholder for future kernel source setup logic
-        return True, f"Kernel source preparation for {kernel_version} would go here"
+        # Step 1: Determine kernel source directory.
+        # For now, use a predictable path under ~/.local/src.
+        src_base = os.environ.get(
+            "XDG_DATA_HOME", os.path.join(os.path.expanduser("~"), ".local", "share")
+        )
+        kernel_source_dir = os.path.join(src_base, "tkt", "sources", f"linux-{kernel_version}")
+
+        # Step 2: Run KernelConfig to generate/finalize .config.
+        config_manager = KernelConfig(kernel_source_dir, kernel_version)
+        success, message = config_manager.apply_config_changes({})
+        if not success:
+            return False, f"Config generation failed: {message}"
+
+        # Step 3: Save the final resolved configuration.
+        config_save_dir = self._get_config_save_dir()
+        success, message = config_manager.save_config_to_file(
+            output_dir=config_save_dir,
+            distro=self.distro or "unknown",
+        )
+        if not success:
+            return False, f"Config saving failed: {message}"
+
+        # Step 4: Hand off to compiler (placeholder for future backend).
+        saved_config_path = config_manager.get_saved_config_path(
+            output_dir=config_save_dir,
+            distro=self.distro or "unknown",
+        )
+        return (
+            True,
+            f"Kernel source prepared. Config saved to {saved_config_path}",
+        )
 
     def configure_kernel(
         self, kernel_version: str, config_type: str = "default"

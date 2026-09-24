@@ -197,6 +197,46 @@ class DebianConfigs(DistroConfigs):
         self._run_command(["apt-get", "install", "-y", *self.packages])
 
 
+class FedoraConfigs(DistroConfigs):
+    """Package management configuration for Fedora Linux."""
+
+    fedora_deps = [
+        "binutils",
+        "bison",
+        "bc",
+        "cscope",
+        "ctags",
+        "device-tree-compiler",
+        "elfutils-libelf-devel",
+        "flex",
+        "gcc",
+        "gcc-c++",
+        "make",
+        "ncurses-devel",
+        "numactl-devel",
+        "openssl-devel",
+        "perl-Data-Dumper",
+        "patchutils",
+        "python3-setuptools",
+        "rpm-build",
+        "zstd-devel",
+        "qt5-qtbase-devel",
+        "kernel-devel",
+    ]
+
+    def __init__(self):
+        super().__init__()
+        self.packages = self.base_deps + self.fedora_deps
+
+    def update_repos(self):
+        self._run_command(["dnf", "makecache"])
+
+    def install_packages(self):
+        self._run_command(
+            ["dnf", "install", "-y", *self.packages], check=True
+        )
+
+
 class UbuntuConfigs(DebianConfigs):
     """
     Package management configuration for Ubuntu.
@@ -242,6 +282,8 @@ def get_distro_configs(name: str) -> DistroConfigs:
         return ArchConfigs()
     elif name_lower == "debian":
         return DebianConfigs()
+    elif name_lower == "fedora":
+        return FedoraConfigs()
     elif name_lower == "ubuntu":
         return UbuntuConfigs()
     else:

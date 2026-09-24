@@ -343,6 +343,78 @@ class KernelConfig:
             return False, f"Config validation failed: {message}"
 
         return True, "Successfully applied and validated config changes"
+    def save_config_to_file(
+        self, output_dir: str, distro: str = "unknown"
+    ) -> Tuple[bool, str]:
+        """
+        Save the final resolved .config to a persistent location.
+
+        This method copies the kernel source's .config file to a
+        distribution- and kernel-version-specific path under
+        ``output_dir`` so that the configuration can be restored or
+        handed off to a compiler later.
+
+        Parameters
+        ----------
+        output_dir : str
+            Base directory where configs should be stored.  Will be
+            created (including parents) if it does not exist.
+        distro : str, optional
+            Distribution name used for naming the saved file.
+            Default is ``"unknown"``.
+
+        Returns
+        -------
+        Tuple[bool, str]
+            (success, message) indicating the result.
+        """
+        if not self.config_path.exists():
+            error_msg = "No .config file found to save"
+            self.add_status(error_msg)
+            return False, error_msg
+
+        try:
+            # Create output directory if it doesn't exist
+            out_path = Path(output_dir)
+            out_path.mkdir(parents=True, exist_ok=True)
+
+            # Name the saved config {distro}-{kernel_version}.config
+            saved_name = f"{distro}-{self.kernel_version}.config"
+            saved_path = out_path / saved_name
+
+            # Copy the .config file to the output location
+            shutil.copy2(self.config_path, saved_path)
+
+            message = f"Config saved to {saved_path}"
+            self.add_status(message)
+            return True, message
+
+        except Exception as e:
+            error_msg = f"Error saving config: {str(e)}"
+            self.add_status(error_msg)
+            return False, error_msg
+
+    def get_saved_config_path(
+        self, output_dir: str, distro: str = "unknown"
+    ) -> str:
+        """
+        Return the path where a saved config would be stored.
+
+        Parameters
+        ----------
+        output_dir : str
+            Base directory where configs are stored.
+        distro : str, optional
+            Distribution name used for naming the saved file.
+
+        Returns
+        -------
+        str
+            Absolute path to the saved config file.
+        """
+        out_path = Path(output_dir)
+        saved_name = f"{distro}-{self.kernel_version}.config"
+        return str(out_path / saved_name)
 
 
 # Integration function for TKTSystemManager

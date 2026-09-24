@@ -1,4 +1,4 @@
-from unittest.mock import Mock, mock_open
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
@@ -335,3 +335,126 @@ class TestKernelToolkitApp:
         app.on_mount()
 
         mock_input_widget.focus.assert_not_called()
+
+
+class TestTKTSystemManagerNewMethods:
+    """Test suite for new TKTSystemManager methods."""
+
+    def test_get_config_save_dir_default(self, mocker):
+        """Test _get_config_save_dir returns default XDG path."""
+        # Ensure XDG_DATA_HOME is not set
+        mocker.patch.dict("os.environ", {}, clear=False)
+        mocker.patch("os.path.expanduser", return_value="/home/user")
+
+        from TKT.cli import TKTSystemManager
+
+        # We can't fully instantiate TKTSystemManager on non-Linux,
+        # but we can test the method directly by creating a minimal instance.
+        manager = object.__new__(TKTSystemManager)
+        manager.distro = None
+        manager.distro_config = None
+        manager.distro_supported = False
+
+        result = manager._get_config_save_dir()
+        assert result == "/home/user/.local/share/tkt/configs"
+
+    def test_get_config_save_dir_with_env(self, mocker):
+        """Test _get_config_save_dir respects XDG_DATA_HOME."""
+        mocker.patch.dict(
+            "os.environ", {"XDG_DATA_HOME": "/custom/xdg/data"}, clear=False
+        )
+        mocker.patch("os.path.expanduser", return_value="/home/user")
+
+        from TKT.cli import TKTSystemManager
+
+        manager = object.__new__(TKTSystemManager)
+        manager.distro = None
+        manager.distro_config = None
+        manager.distro_supported = False
+
+        result = manager._get_config_save_dir()
+        assert result == "/custom/xdg/data/tkt/configs"
+
+    @patch("TKT.cli.KernelConfig")
+    def test_prepare_kernel_source_success(self, mock_kc_class, mocker):
+        """Test prepare_kernel_source with successful config workflow."""
+        mock_config_instance = Mock()
+        mock_config_instance.apply_config_changes.return_value = (
+            True,
+            "Successfully applied and validated config changes",
+        )
+        mock_config_instance.save_config_to_file.return_value = (
+            True,
+            "Config saved to /tmp/configs/arch-6.16.config",
+        )
+        mock_config_instance.get_saved_config_path.return_value = (
+            "/tmp/configs/arch-6.16.config"
+        )
+        mock_kc_class.return_value = mock_config_instance
+
+        # Mock the distro detection to return a supported distro
+        mocker.patch("TKT.cli.get_distribution_name", return_value="arch")
+        mocker.patch("TKT.cli.get_distro_configs", return_value=Mock())
+
+        from TKT.cli import TKTSystemManager
+
+        manager = TKTSystemManager()
+        success, message = manager.prepare_kernel_source("6.16")
+
+        assert success is True
+        assert "saved to" in message.lower()
+        mock_kc_class.assert_called_once()
+        mock_config_instance.apply_config_changes.assert_called_once_with({})
+        mock_config_instance.save_config_to_file.assert_called_once()
+
+    @patch("TKT.cli.KernelConfig")
+    def test_prepare_kernel_source_config_generation_failure(
+        self, mock_kc_class, mocker
+    ):
+        """Test prepare_kernel_source when config generation fails."""
+        mock_config_instance = Mock()
+        mock_config_instance.apply_config_changes.return_value = (
+            False,
+            "Invalid kernel source directory",
+        )
+        mock_kc_class.return_value = mock_config_instance
+
+        mocker.patch("TKT.cli.get_distribution_name", return_value="debian")
+        mocker.patch("TKT.cli.get_distro_configs", return_value=Mock())
+
+        from TKT.cli import TKTSystemManager
+
+        manager = TKTSystemManager()
+        success, message = manager.prepare_kernel_source("6.15")
+
+        assert success is False
+        assert "failed" in message.lower()
+        # save_config_to_file should NOT be called when generation fails
+        mock_config_instance.save_config_to_file.assert_not_called()
+
+    @patch("TKT.cli.KernelConfig")
+    def test_prepare_kernel_source_config_save_failure(
+        self, mock_kc_class, mocker
+    ):
+        """Test prepare_kernel_source when config saving fails."""
+        mock_config_instance = Mock()
+        mock_config_instance.apply_config_changes.return_value = (
+            True,
+            "Successfully applied and validated config changes",
+        )
+        mock_config_instance.save_config_to_file.return_value = (
+            False,
+            "No .config file found to save",
+        )
+        mock_kc_class.return_value = mock_config_instance
+
+        mocker.patch("TKT.cli.get_distribution_name", return_value="ubuntu")
+        mocker.patch("TKT.cli.get_distro_configs", return_value=Mock())
+
+        from TKT.cli import TKTSystemManager
+
+        manager = TKTSystemManager()
+        success, message = manager.prepare_kernel_source("6.16")
+
+        assert success is False
+        assert "failed" in message.lower()
