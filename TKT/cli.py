@@ -173,7 +173,8 @@ class TKTSystemManager:
 
         """
         data_home = os.environ.get(
-            "XDG_DATA_HOME", os.path.join(os.path.expanduser("~"), ".local", "share"),
+            "XDG_DATA_HOME",
+            os.path.join(os.path.expanduser("~"), ".local", "share"),
         )
         return os.path.join(data_home, "tkt", "configs")
 
@@ -201,9 +202,12 @@ class TKTSystemManager:
         # Step 1: Determine kernel source directory.
         # For now, use a predictable path under ~/.local/src.
         src_base = os.environ.get(
-            "XDG_DATA_HOME", os.path.join(os.path.expanduser("~"), ".local", "share"),
+            "XDG_DATA_HOME",
+            os.path.join(os.path.expanduser("~"), ".local", "share"),
         )
-        kernel_source_dir = os.path.join(src_base, "tkt", "sources", f"linux-{kernel_version}")
+        kernel_source_dir = os.path.join(
+            src_base, "tkt", "sources", f"linux-{kernel_version}"
+        )
 
         # Step 2: Run KernelConfig to generate/finalize .config.
         config_manager = KernelConfig(kernel_source_dir, kernel_version)
@@ -231,7 +235,9 @@ class TKTSystemManager:
         )
 
     def configure_kernel(
-        self, kernel_version: str, config_type: str = "default",
+        self,
+        kernel_version: str,
+        config_type: str = "default",
     ) -> tuple[bool, str]:
         """Configure kernel for compilation (placeholder for future implementation).
 
@@ -271,7 +277,8 @@ class KernelToolkitApp(App):
 
         # Get backend info with distro validation
         self.backend, self.backend_distro_supported = choose_backend(
-            self.config, self.config_path,
+            self.config,
+            self.config_path,
         )
         self.lib_module = load_library(self.backend)
 

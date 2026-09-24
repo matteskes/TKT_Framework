@@ -98,8 +98,7 @@ class BaseResult(ABC, Generic[T, E]):
 
     @abstractmethod
     def unwrap_or(self, default: U, /) -> "T | U":
-        """Return the contained value if Ok; otherwise return `default`.
-        """
+        """Return the contained value if Ok; otherwise return `default`."""
 
     @abstractmethod
     def map(self, op: Callable[[T], U], /) -> "BaseResult[U, E]":

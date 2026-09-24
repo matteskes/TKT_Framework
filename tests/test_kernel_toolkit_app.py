@@ -433,9 +433,7 @@ class TestTKTSystemManagerNewMethods:
         mock_config_instance.save_config_to_file.assert_not_called()
 
     @patch("TKT.cli.KernelConfig")
-    def test_prepare_kernel_source_config_save_failure(
-        self, mock_kc_class, mocker
-    ):
+    def test_prepare_kernel_source_config_save_failure(self, mock_kc_class, mocker):
         """Test prepare_kernel_source when config saving fails."""
         mock_config_instance = Mock()
         mock_config_instance.apply_config_changes.return_value = (

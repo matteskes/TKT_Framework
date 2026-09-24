@@ -129,7 +129,8 @@ class TestKernelConfig:
         assert result is True
         mock_run.assert_called_once_with(
             ["make", "defconfig"],
-            check=False, cwd=kernel_config.kernel_source_dir,
+            check=False,
+            cwd=kernel_config.kernel_source_dir,
             capture_output=True,
             text=True,
             timeout=300,
@@ -363,7 +364,8 @@ CONFIG_MODULES=y
         assert "Successfully resolved config dependencies" in message
         mock_run.assert_called_once_with(
             ["make", "olddefconfig"],
-            check=False, cwd=kernel_config.kernel_source_dir,
+            check=False,
+            cwd=kernel_config.kernel_source_dir,
             capture_output=True,
             text=True,
             timeout=180,
@@ -684,9 +686,7 @@ CONFIG_BAZ=""
         """Test that get_saved_config_path returns the expected path."""
         config = KernelConfig(str(temp_dirs), "6.16")
 
-        path = config.get_saved_config_path(
-            output_dir="/tmp/configs", distro="fedora"
-        )
+        path = config.get_saved_config_path(output_dir="/tmp/configs", distro="fedora")
 
         assert path == "/tmp/configs/fedora-6.16.config"
 

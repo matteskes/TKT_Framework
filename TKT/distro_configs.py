@@ -65,7 +65,9 @@ class DistroConfigs(ABC):
         self.packages: list[str] = self.base_deps.copy()
 
     def _run_command(
-        self, command: list[str], check: bool = True,
+        self,
+        command: list[str],
+        check: bool = True,
     ) -> subprocess.CompletedProcess[str]:
         """Run a shell command with error handling.
 
@@ -226,7 +228,8 @@ class FedoraConfigs(DistroConfigs):
 
     def install_packages(self):
         self._run_command(
-            ["dnf", "install", "-y", *self.packages], check=True,
+            ["dnf", "install", "-y", *self.packages],
+            check=True,
         )
 
 

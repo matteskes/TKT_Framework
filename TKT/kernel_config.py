@@ -111,7 +111,8 @@ class KernelConfig:
         try:
             result = subprocess.run(
                 ["make", "defconfig"],
-                check=False, cwd=self.kernel_source_dir,
+                check=False,
+                cwd=self.kernel_source_dir,
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5 minute timeout
@@ -223,7 +224,9 @@ class KernelConfig:
                 f.write("# Kernel configuration\n#\n\n")
 
                 # Write config entries in sorted order for consistency
-                f.writelines(f"{key}={config_dict[key]}\n" for key in sorted(config_dict.keys()))
+                f.writelines(
+                    f"{key}={config_dict[key]}\n" for key in sorted(config_dict.keys())
+                )
 
             self.add_status(f"Successfully wrote {len(config_dict)} config options")
             return True
@@ -275,7 +278,8 @@ class KernelConfig:
         try:
             result = subprocess.run(
                 ["make", "olddefconfig"],
-                check=False, cwd=self.kernel_source_dir,
+                check=False,
+                cwd=self.kernel_source_dir,
                 capture_output=True,
                 text=True,
                 timeout=180,  # 3 minute timeout
@@ -338,8 +342,11 @@ class KernelConfig:
             return False, f"Config validation failed: {message}"
 
         return True, "Successfully applied and validated config changes"
+
     def save_config_to_file(
-        self, output_dir: str, distro: str = "unknown",
+        self,
+        output_dir: str,
+        distro: str = "unknown",
     ) -> tuple[bool, str]:
         """Save the final resolved .config to a persistent location.
 
@@ -390,7 +397,9 @@ class KernelConfig:
             return False, error_msg
 
     def get_saved_config_path(
-        self, output_dir: str, distro: str = "unknown",
+        self,
+        output_dir: str,
+        distro: str = "unknown",
     ) -> str:
         """Return the path where a saved config would be stored.
 
@@ -414,7 +423,9 @@ class KernelConfig:
 
 # Integration function for TKTSystemManager
 def configure_kernel_with_changes(
-    kernel_source_dir: str, kernel_version: str, config_changes: dict[str, str],
+    kernel_source_dir: str,
+    kernel_version: str,
+    config_changes: dict[str, str],
 ) -> tuple[bool, str]:
     """Helper function for easy integration with TKTSystemManager.
 
