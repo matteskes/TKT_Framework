@@ -1,14 +1,14 @@
 # runtime dependencies
 textual==6.1.0
 tomlkit>=0.12.0
-requests==2.33.0
+requests>=2.32.5,<3
 
 # dev dependencies
 mypy==1.17.1
-pytest==9.0.3
+pytest>=8.4.2,<9
 pytest-cov==6.2.1
 pytest-mock==3.15.0
-black==26.3.1
+black>=25.11.0,<26
 isort==6.0.1
 ruff==0.12.12
 
