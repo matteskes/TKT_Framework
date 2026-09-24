@@ -10,7 +10,7 @@ import pytest
 import requests
 
 from TKT.fetch import FileData, FileSize, cached_fetch, filename_from_url
-from TKT.safe import Err, Ok
+from TKT.safe import Ok
 
 BASE_URL: Final[str] = (
     "https://github.com/The-Kernel-Toolkit/TKT/releases/download/v6.16-tkt"
@@ -141,16 +141,20 @@ class TestFileData:
         assert file_data.compiler == "gcc"
 
         name = "Debian-linux.tar.gz"
-        with pytest.raises(ValueError, match="^Unexpected file name format"):
-            file_data = FileData(
-                name=name,
-                size=size,
-                updated_at=updated_at,
-                digest=digest,
-                url=url,
-                version=version,
-                tag=tag,
-            )
+        file_data = FileData(
+            name=name,
+            size=size,
+            updated_at=updated_at,
+            digest=digest,
+            url=url,
+            version=version,
+            tag=tag,
+        )
+
+        # Lenient parsing: "Debian-linux.tar.gz" has < 3 parts, so all fields are empty
+        assert file_data.distro == ""
+        assert file_data.scheduler == ""
+        assert file_data.compiler == ""
 
 
 class TestFunctions:
@@ -201,28 +205,28 @@ class TestFunctions:
 
         releases = cached_fetch(self.fetch_url, "kernel_releases")
 
-        match releases:
-            case Ok(release_list):
-                assert len(release_list) == 16
-                for release in release_list:
-                    assert isinstance(release, dict)
-                    assert "name" in release
-                    assert "version" in release
-                    assert "tag" in release
-                    assert "size" in release
-                    assert "updated_at" in release
-                    assert "digest" in release
-                    assert "url" in release
+        if isinstance(releases, Ok):
+            release_list = releases.ok
+            assert len(release_list) == 16
+            for release in release_list:
+                assert isinstance(release, dict)
+                assert "name" in release
+                assert "version" in release
+                assert "tag" in release
+                assert "size" in release
+                assert "updated_at" in release
+                assert "digest" in release
+                assert "url" in release
 
-                    assert isinstance(release["name"], str)
-                    assert isinstance(release["version"], str)
-                    assert isinstance(release["tag"], str)
-                    assert isinstance(release["size"], int)
-                    assert isinstance(release["updated_at"], str)
-                    assert isinstance(release["digest"], str)
-                    assert isinstance(release["url"], str)
-            case Err(error):
-                raise error
+                assert isinstance(release["name"], str)
+                assert isinstance(release["version"], str)
+                assert isinstance(release["tag"], str)
+                assert isinstance(release["size"], int)
+                assert isinstance(release["updated_at"], str)
+                assert isinstance(release["digest"], str)
+                assert isinstance(release["url"], str)
+        else:
+            raise releases.err
 
     def test_cached_fetch_with_stale_data(self, mocker):
         response = Response()
@@ -241,28 +245,28 @@ class TestFunctions:
 
         releases = cached_fetch(self.fetch_url, "kernel_releases")
 
-        match releases:
-            case Ok(release_list):
-                assert len(release_list) == 16
-                for release in release_list:
-                    assert isinstance(release, dict)
-                    assert "name" in release
-                    assert "version" in release
-                    assert "tag" in release
-                    assert "size" in release
-                    assert "updated_at" in release
-                    assert "digest" in release
-                    assert "url" in release
+        if isinstance(releases, Ok):
+            release_list = releases.ok
+            assert len(release_list) == 16
+            for release in release_list:
+                assert isinstance(release, dict)
+                assert "name" in release
+                assert "version" in release
+                assert "tag" in release
+                assert "size" in release
+                assert "updated_at" in release
+                assert "digest" in release
+                assert "url" in release
 
-                    assert isinstance(release["name"], str)
-                    assert isinstance(release["version"], str)
-                    assert isinstance(release["tag"], str)
-                    assert isinstance(release["size"], int)
-                    assert isinstance(release["updated_at"], str)
-                    assert isinstance(release["digest"], str)
-                    assert isinstance(release["url"], str)
-            case Err(error):
-                raise error
+                assert isinstance(release["name"], str)
+                assert isinstance(release["version"], str)
+                assert isinstance(release["tag"], str)
+                assert isinstance(release["size"], int)
+                assert isinstance(release["updated_at"], str)
+                assert isinstance(release["digest"], str)
+                assert isinstance(release["url"], str)
+        else:
+            raise releases.err
 
     def test_cached_fetch_with_cache_miss(self, mocker):
         response = Response()
@@ -279,25 +283,25 @@ class TestFunctions:
 
         releases = cached_fetch(self.fetch_url, "kernel_releases")
 
-        match releases:
-            case Ok(release_list):
-                assert len(release_list) == 16
-                for release in release_list:
-                    assert isinstance(release, dict)
-                    assert "name" in release
-                    assert "version" in release
-                    assert "tag" in release
-                    assert "size" in release
-                    assert "updated_at" in release
-                    assert "digest" in release
-                    assert "url" in release
+        if isinstance(releases, Ok):
+            release_list = releases.ok
+            assert len(release_list) == 16
+            for release in release_list:
+                assert isinstance(release, dict)
+                assert "name" in release
+                assert "version" in release
+                assert "tag" in release
+                assert "size" in release
+                assert "updated_at" in release
+                assert "digest" in release
+                assert "url" in release
 
-                    assert isinstance(release["name"], str)
-                    assert isinstance(release["version"], str)
-                    assert isinstance(release["tag"], str)
-                    assert isinstance(release["size"], int)
-                    assert isinstance(release["updated_at"], str)
-                    assert isinstance(release["digest"], str)
-                    assert isinstance(release["url"], str)
-            case Err(error):
-                raise error
+                assert isinstance(release["name"], str)
+                assert isinstance(release["version"], str)
+                assert isinstance(release["tag"], str)
+                assert isinstance(release["size"], int)
+                assert isinstance(release["updated_at"], str)
+                assert isinstance(release["digest"], str)
+                assert isinstance(release["url"], str)
+        else:
+            raise releases.err

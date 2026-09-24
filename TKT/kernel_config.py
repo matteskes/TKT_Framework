@@ -1,5 +1,4 @@
-"""
-Kernel configuration management module.
+"""Kernel configuration management module.
 
 This module provides functionality to manage Linux kernel configuration files,
 including loading, modifying, and validating .config files with proper
@@ -18,14 +17,12 @@ Design:
 """
 
 import shutil
-import subprocess as sp
+import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 
 class KernelConfig:
-    """
-    Manages kernel configuration files with automatic dependency resolution.
+    """Manages kernel configuration files with automatic dependency resolution.
 
     The class follows this workflow:
     1. Load existing .config or generate with make defconfig if missing
@@ -37,6 +34,7 @@ class KernelConfig:
         >>> config = KernelConfig("/path/to/linux-6.16", "6.16")
         >>> changes = {"CONFIG_DEBUG_KERNEL": "y", "CONFIG_LOCALVERSION": '"-custom"'}
         >>> success, message = config.apply_config_changes(changes)
+
     """
 
     def __init__(self, kernel_source_dir: str, kernel_version: str):
@@ -44,16 +42,16 @@ class KernelConfig:
         self.kernel_version = kernel_version
         self.config_path = self.kernel_source_dir / ".config"
         self.backup_path = self.kernel_source_dir / ".config.backup"
-        self.status_messages: List[str] = []
+        self.status_messages: list[str] = []
 
     def add_status(self, message: str) -> None:
-        """
-        Add a status message for UI integration.
+        """Add a status message for UI integration.
 
         Parameters
         ----------
         message : str
             Status message to add to the log
+
         """
         self.status_messages.append(message)
         # Keep only the most recent messages
@@ -61,28 +59,28 @@ class KernelConfig:
             self.status_messages.pop(0)
 
     def get_status(self) -> str:
-        """
-        Get current status for UI display.
+        """Get current status for UI display.
 
         Returns
         -------
         str
             Formatted status messages
+
         """
         return "\n".join(self.status_messages[-5:])
 
     def validate_kernel_source(self) -> bool:
-        """
-        Validate that the kernel source directory exists and is proper.
+        """Validate that the kernel source directory exists and is proper.
 
         Returns
         -------
         bool
             True if kernel source is valid, False otherwise
+
         """
         if not self.kernel_source_dir.exists():
             self.add_status(
-                f"Error: Kernel source directory not found: {self.kernel_source_dir}"
+                f"Error: Kernel source directory not found: {self.kernel_source_dir}",
             )
             return False
 
@@ -96,13 +94,13 @@ class KernelConfig:
         return True
 
     def ensure_config_exists(self) -> bool:
-        """
-        Ensure .config exists, run make defconfig if missing.
+        """Ensure .config exists, run make defconfig if missing.
 
         Returns
         -------
         bool
             True if config exists or was created successfully
+
         """
         if self.config_path.exists():
             self.add_status("Found existing .config file")
@@ -111,8 +109,9 @@ class KernelConfig:
         self.add_status("No .config found, running 'make defconfig'...")
 
         try:
-            result = sp.run(
+            result = subprocess.run(
                 ["make", "defconfig"],
+                check=False,
                 cwd=self.kernel_source_dir,
                 capture_output=True,
                 text=True,
@@ -122,25 +121,24 @@ class KernelConfig:
             if result.returncode == 0:
                 self.add_status("Successfully generated default config")
                 return True
-            else:
-                self.add_status(f"make defconfig failed: {result.stderr}")
-                return False
+            self.add_status(f"make defconfig failed: {result.stderr}")
+            return False
 
-        except sp.TimeoutExpired:
+        except subprocess.TimeoutExpired:
             self.add_status("make defconfig timed out after 5 minutes")
             return False
         except Exception as e:
-            self.add_status(f"Error running make defconfig: {str(e)}")
+            self.add_status(f"Error running make defconfig: {e!s}")
             return False
 
     def backup_config(self) -> bool:
-        """
-        Create a backup of the current config file.
+        """Create a backup of the current config file.
 
         Returns
         -------
         bool
             True if backup was successful
+
         """
         try:
             if self.config_path.exists():
@@ -149,17 +147,17 @@ class KernelConfig:
                 return True
             return False
         except Exception as e:
-            self.add_status(f"Failed to backup config: {str(e)}")
+            self.add_status(f"Failed to backup config: {e!s}")
             return False
 
     def restore_config(self) -> bool:
-        """
-        Restore config from backup.
+        """Restore config from backup.
 
         Returns
         -------
         bool
             True if restore was successful
+
         """
         try:
             if self.backup_path.exists():
@@ -168,25 +166,25 @@ class KernelConfig:
                 return True
             return False
         except Exception as e:
-            self.add_status(f"Failed to restore config: {str(e)}")
+            self.add_status(f"Failed to restore config: {e!s}")
             return False
 
-    def read_config(self) -> Dict[str, str]:
-        """
-        Read the current .config file into a dictionary.
+    def read_config(self) -> dict[str, str]:
+        """Read the current .config file into a dictionary.
 
         Returns
         -------
         Dict[str, str]
             Dictionary of config options and their values
+
         """
-        config_dict: Dict[str, str] = {}
+        config_dict: dict[str, str] = {}
 
         if not self.config_path.exists():
             return config_dict
 
         try:
-            with open(self.config_path, "r", encoding="utf-8") as f:
+            with open(self.config_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     # Skip comments and empty lines
@@ -202,12 +200,11 @@ class KernelConfig:
             return config_dict
 
         except Exception as e:
-            self.add_status(f"Error reading config: {str(e)}")
+            self.add_status(f"Error reading config: {e!s}")
             return {}
 
-    def write_config(self, config_dict: Dict[str, str]) -> bool:
-        """
-        Write configuration dictionary to .config file.
+    def write_config(self, config_dict: dict[str, str]) -> bool:
+        """Write configuration dictionary to .config file.
 
         Parameters
         ----------
@@ -218,6 +215,7 @@ class KernelConfig:
         -------
         bool
             True if write was successful
+
         """
         try:
             with open(self.config_path, "w", encoding="utf-8") as f:
@@ -226,19 +224,19 @@ class KernelConfig:
                 f.write("# Kernel configuration\n#\n\n")
 
                 # Write config entries in sorted order for consistency
-                for key in sorted(config_dict.keys()):
-                    f.write(f"{key}={config_dict[key]}\n")
+                f.writelines(
+                    f"{key}={config_dict[key]}\n" for key in sorted(config_dict.keys())
+                )
 
             self.add_status(f"Successfully wrote {len(config_dict)} config options")
             return True
 
         except Exception as e:
-            self.add_status(f"Error writing config: {str(e)}")
+            self.add_status(f"Error writing config: {e!s}")
             return False
 
-    def modify_config(self, changes: Dict[str, str]) -> bool:
-        """
-        Modify specific config options.
+    def modify_config(self, changes: dict[str, str]) -> bool:
+        """Modify specific config options.
 
         Parameters
         ----------
@@ -249,6 +247,7 @@ class KernelConfig:
         -------
         bool
             True if modifications were successful
+
         """
         if not self.config_path.exists():
             self.add_status("No config file to modify")
@@ -265,20 +264,21 @@ class KernelConfig:
         # Write modified config
         return self.write_config(config_dict)
 
-    def run_olddefconfig(self) -> Tuple[bool, str]:
-        """
-        Run make olddefconfig to resolve dependencies.
+    def run_olddefconfig(self) -> tuple[bool, str]:
+        """Run make olddefconfig to resolve dependencies.
 
         Returns
         -------
         Tuple[bool, str]
             (success, message) indicating the result
+
         """
         self.add_status("Running 'make olddefconfig' to resolve dependencies...")
 
         try:
-            result = sp.run(
+            result = subprocess.run(
                 ["make", "olddefconfig"],
+                check=False,
                 cwd=self.kernel_source_dir,
                 capture_output=True,
                 text=True,
@@ -289,23 +289,21 @@ class KernelConfig:
                 message = "Successfully resolved config dependencies"
                 self.add_status(message)
                 return True, message
-            else:
-                error_msg = f"make olddefconfig failed: {result.stderr}"
-                self.add_status(error_msg)
-                return False, error_msg
+            error_msg = f"make olddefconfig failed: {result.stderr}"
+            self.add_status(error_msg)
+            return False, error_msg
 
-        except sp.TimeoutExpired:
+        except subprocess.TimeoutExpired:
             error_msg = "make olddefconfig timed out after 3 minutes"
             self.add_status(error_msg)
             return False, error_msg
         except Exception as e:
-            error_msg = f"Error running make olddefconfig: {str(e)}"
+            error_msg = f"Error running make olddefconfig: {e!s}"
             self.add_status(error_msg)
             return False, error_msg
 
-    def apply_config_changes(self, changes: Dict[str, str]) -> Tuple[bool, str]:
-        """
-        Main method to apply config changes with full workflow.
+    def apply_config_changes(self, changes: dict[str, str]) -> tuple[bool, str]:
+        """Main method to apply config changes with full workflow.
 
         Parameters
         ----------
@@ -316,6 +314,7 @@ class KernelConfig:
         -------
         Tuple[bool, str]
             (success, message) indicating the result
+
         """
         self.add_status(f"Applying config changes for kernel {self.kernel_version}")
 
@@ -344,13 +343,91 @@ class KernelConfig:
 
         return True, "Successfully applied and validated config changes"
 
+    def save_config_to_file(
+        self,
+        output_dir: str,
+        distro: str = "unknown",
+    ) -> tuple[bool, str]:
+        """Save the final resolved .config to a persistent location.
+
+        This method copies the kernel source's .config file to a
+        distribution- and kernel-version-specific path under
+        ``output_dir`` so that the configuration can be restored or
+        handed off to a compiler later.
+
+        Parameters
+        ----------
+        output_dir : str
+            Base directory where configs should be stored.  Will be
+            created (including parents) if it does not exist.
+        distro : str, optional
+            Distribution name used for naming the saved file.
+            Default is ``"unknown"``.
+
+        Returns
+        -------
+        Tuple[bool, str]
+            (success, message) indicating the result.
+
+        """
+        if not self.config_path.exists():
+            error_msg = "No .config file found to save"
+            self.add_status(error_msg)
+            return False, error_msg
+
+        try:
+            # Create output directory if it doesn't exist
+            out_path = Path(output_dir)
+            out_path.mkdir(parents=True, exist_ok=True)
+
+            # Name the saved config {distro}-{kernel_version}.config
+            saved_name = f"{distro}-{self.kernel_version}.config"
+            saved_path = out_path / saved_name
+
+            # Copy the .config file to the output location
+            shutil.copy2(self.config_path, saved_path)
+
+            message = f"Config saved to {saved_path}"
+            self.add_status(message)
+            return True, message
+
+        except Exception as e:
+            error_msg = f"Error saving config: {e!s}"
+            self.add_status(error_msg)
+            return False, error_msg
+
+    def get_saved_config_path(
+        self,
+        output_dir: str,
+        distro: str = "unknown",
+    ) -> str:
+        """Return the path where a saved config would be stored.
+
+        Parameters
+        ----------
+        output_dir : str
+            Base directory where configs are stored.
+        distro : str, optional
+            Distribution name used for naming the saved file.
+
+        Returns
+        -------
+        str
+            Absolute path to the saved config file.
+
+        """
+        out_path = Path(output_dir)
+        saved_name = f"{distro}-{self.kernel_version}.config"
+        return str(out_path / saved_name)
+
 
 # Integration function for TKTSystemManager
 def configure_kernel_with_changes(
-    kernel_source_dir: str, kernel_version: str, config_changes: Dict[str, str]
-) -> Tuple[bool, str]:
-    """
-    Helper function for easy integration with TKTSystemManager.
+    kernel_source_dir: str,
+    kernel_version: str,
+    config_changes: dict[str, str],
+) -> tuple[bool, str]:
+    """Helper function for easy integration with TKTSystemManager.
 
     Parameters
     ----------
@@ -365,6 +442,7 @@ def configure_kernel_with_changes(
     -------
     Tuple[bool, str]
         (success, message) indicating the result
+
     """
     config_manager = KernelConfig(kernel_source_dir, kernel_version)
     return config_manager.apply_config_changes(config_changes)

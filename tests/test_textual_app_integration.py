@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from TKT.cli import TKTSystemManager
 
@@ -97,8 +97,23 @@ class TestTKTSystemManager:
         assert success is False
         assert "Failed to install dependencies: Installation failed" in message
 
-    def test_prepare_kernel_source(self, mocker):
-        """Test prepare_kernel_source placeholder method."""
+    @patch("TKT.cli.KernelConfig")
+    def test_prepare_kernel_source(self, mock_kc_class, mocker):
+        """Test prepare_kernel_source with mocked KernelConfig."""
+        mock_config_instance = Mock()
+        mock_config_instance.apply_config_changes.return_value = (
+            True,
+            "Successfully applied and validated config changes",
+        )
+        mock_config_instance.save_config_to_file.return_value = (
+            True,
+            "Config saved to /tmp/configs/debian-6.16.config",
+        )
+        mock_config_instance.get_saved_config_path.return_value = (
+            "/tmp/configs/debian-6.16.config"
+        )
+        mock_kc_class.return_value = mock_config_instance
+
         mocker.patch("TKT.cli.get_distribution_name", return_value="debian")
         mocker.patch("TKT.cli.get_distro_configs")
 
@@ -106,7 +121,7 @@ class TestTKTSystemManager:
         success, message = manager.prepare_kernel_source("6.16")
 
         assert success is True
-        assert "Kernel source preparation for 6.16 would go here" in message
+        assert "saved to" in message.lower()
 
     def test_configure_kernel_default(self, mocker):
         """Test configure_kernel with default config type."""

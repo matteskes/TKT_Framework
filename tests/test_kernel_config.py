@@ -1,5 +1,5 @@
 import shutil
-import subprocess as sp
+import subprocess
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -129,6 +129,7 @@ class TestKernelConfig:
         assert result is True
         mock_run.assert_called_once_with(
             ["make", "defconfig"],
+            check=False,
             cwd=kernel_config.kernel_source_dir,
             capture_output=True,
             text=True,
@@ -155,7 +156,7 @@ class TestKernelConfig:
     @patch("subprocess.run")
     def test_ensure_config_exists_timeout(self, mock_run, kernel_config):
         """Test ensure_config_exists when make defconfig times out."""
-        mock_run.side_effect = sp.TimeoutExpired("make", 300)
+        mock_run.side_effect = subprocess.TimeoutExpired("make", 300)
 
         result = kernel_config.ensure_config_exists()
 
@@ -363,6 +364,7 @@ CONFIG_MODULES=y
         assert "Successfully resolved config dependencies" in message
         mock_run.assert_called_once_with(
             ["make", "olddefconfig"],
+            check=False,
             cwd=kernel_config.kernel_source_dir,
             capture_output=True,
             text=True,
@@ -383,7 +385,7 @@ CONFIG_MODULES=y
     @patch("subprocess.run")
     def test_run_olddefconfig_timeout(self, mock_run, kernel_config):
         """Test olddefconfig timeout."""
-        mock_run.side_effect = sp.TimeoutExpired("make", 180)
+        mock_run.side_effect = subprocess.TimeoutExpired("make", 180)
 
         success, message = kernel_config.run_olddefconfig()
 
@@ -609,3 +611,89 @@ CONFIG_QUOTED="value with spaces"
         read_result = config.read_config()
         assert len(read_result) == 1000
         assert read_result == large_config
+
+
+class TestSaveConfigToFile:
+    """Test suite for KernelConfig.save_config_to_file()."""
+
+    @pytest.fixture
+    def temp_dirs(self):
+        """Create temporary kernel source and output directories."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            kernel_dir = Path(temp_dir) / "linux-6.16"
+            kernel_dir.mkdir()
+            (kernel_dir / "Kconfig").write_text("# Kernel configuration")
+            (kernel_dir / "Makefile").write_text("# Kernel Makefile")
+            (kernel_dir / "init").mkdir()
+
+            # Create a .config file
+            config_content = """# This is a kernel config
+CONFIG_FOO=y
+CONFIG_BAR=m
+CONFIG_BAZ=""
+"""
+            (kernel_dir / ".config").write_text(config_content)
+
+            yield kernel_dir
+
+    def test_save_config_to_file_success(self, temp_dirs):
+        """Test successful saving of .config to output directory."""
+        config = KernelConfig(str(temp_dirs), "6.16")
+
+        with tempfile.TemporaryDirectory() as output_dir:
+            success, message = config.save_config_to_file(
+                output_dir=output_dir, distro="arch"
+            )
+
+            assert success is True
+            assert "saved to" in message.lower()
+
+            # Verify the file was actually created
+            saved_file = Path(output_dir) / "arch-6.16.config"
+            assert saved_file.exists()
+            assert saved_file.read_text() == (temp_dirs / ".config").read_text()
+
+    def test_save_config_to_file_no_config(self, temp_dirs):
+        """Test saving when no .config exists."""
+        # Remove the .config file
+        (temp_dirs / ".config").unlink()
+
+        config = KernelConfig(str(temp_dirs), "6.16")
+
+        with tempfile.TemporaryDirectory() as output_dir:
+            success, message = config.save_config_to_file(
+                output_dir=output_dir, distro="debian"
+            )
+
+            assert success is False
+            assert "no" in message.lower()
+
+    def test_save_config_to_file_creates_output_dir(self, temp_dirs):
+        """Test that output directory is created if it doesn't exist."""
+        config = KernelConfig(str(temp_dirs), "6.16")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            nested_output = Path(temp_dir) / "a" / "b" / "c"
+            success, message = config.save_config_to_file(
+                output_dir=str(nested_output), distro="ubuntu"
+            )
+
+            assert success is True
+            assert nested_output.exists()
+            assert (nested_output / "ubuntu-6.16.config").exists()
+
+    def test_get_saved_config_path(self, temp_dirs):
+        """Test that get_saved_config_path returns the expected path."""
+        config = KernelConfig(str(temp_dirs), "6.16")
+
+        path = config.get_saved_config_path(output_dir="/tmp/configs", distro="fedora")
+
+        assert path == "/tmp/configs/fedora-6.16.config"
+
+    def test_get_saved_config_path_default_distro(self, temp_dirs):
+        """Test get_saved_config_path with default 'unknown' distro."""
+        config = KernelConfig(str(temp_dirs), "5.15")
+
+        path = config.get_saved_config_path(output_dir="/tmp/configs")
+
+        assert path == "/tmp/configs/unknown-5.15.config"

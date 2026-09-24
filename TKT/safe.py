@@ -1,5 +1,4 @@
-"""
-Safe function execution.
+"""Safe function execution.
 
 This module defines utilities for handling errors in a functional style.
 Decorated functions return a `Result` object instead of raising
@@ -28,16 +27,22 @@ Design:
 
 import json
 import os
+import sys
 from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Never,
-    ParamSpec,
-    TypeAlias,
-    TypeVar,
-)
+
+if sys.version_info >= (3, 11):
+    from typing import Never, ParamSpec, TypeAlias
+else:
+    from collections.abc import Callable
+    from typing import (
+        Any,
+        Generic,
+        TypeVar,
+    )
+
+    from typing_extensions import ParamSpec, TypeAlias
+
+    Never = None  # type: ignore[assignment,misc]
 
 T = TypeVar("T", covariant=True)
 U = TypeVar("U")
@@ -47,8 +52,7 @@ P = ParamSpec("P")
 
 
 class BaseResult(ABC, Generic[T, E]):
-    """
-    Base interface for Result types.
+    """Base interface for Result types.
 
     Represents a computation that may either succeed (Ok) or fail (Err).
     Provides methods to inspect and transform the contained value or
@@ -57,76 +61,69 @@ class BaseResult(ABC, Generic[T, E]):
 
     @abstractmethod
     def __bool__(self) -> bool:
-        """
-        Return True if the result is Ok, False if Err.
+        """Return True if the result is Ok, False if Err.
 
         This allows using a Result in boolean contexts.
         """
 
     @abstractmethod
     def __and__(self, other: Any, /) -> Any:
-        """
-        Short-circuit logical AND with another Result.
+        """Short-circuit logical AND with another Result.
 
         Returns `self` if it is Err; otherwise returns `other`.
         """
 
     @abstractmethod
     def __or__(self, other: Any, /) -> Any:
-        """
-        Short-circuit logical OR with another Result.
+        """Short-circuit logical OR with another Result.
 
         Returns `self` if it is Ok; otherwise returns `other`.
         """
 
     @abstractmethod
     def __eq__(self, other: Any, /) -> bool:
-        """
-        Return True if other is the same Result variant and has
+        """Return True if other is the same Result variant and has
         an equal inner value or return False otherwise.
         """
 
     @abstractmethod
     def unwrap(self) -> T:
-        """
-        Return the contained value if Ok, otherwise raise the contained
+        """Return the contained value if Ok, otherwise raise the contained
         error.
 
         Raises:
             E: The error contained in Err.
+
         """
 
     @abstractmethod
-    def unwrap_or(self, default: U, /) -> T | U:
-        """
-        Return the contained value if Ok; otherwise return `default`.
-        """
+    def unwrap_or(self, default: U, /) -> "T | U":
+        """Return the contained value if Ok; otherwise return `default`."""
 
     @abstractmethod
     def map(self, op: Callable[[T], U], /) -> "BaseResult[U, E]":
-        """
-        Apply `op` to the contained value if Ok, leaving Err unchanged.
+        """Apply `op` to the contained value if Ok, leaving Err unchanged.
 
         Returns:
             BaseResult[U, E]: A new Result with the transformed value or
             the original error.
+
         """
 
     @abstractmethod
     def map_or(self, default: U, op: Callable[[T], U], /) -> U:
-        """
-        Apply `op` to the contained value if Ok; otherwise return
+        """Apply `op` to the contained value if Ok; otherwise return
         `default`.
         """
 
     @abstractmethod
     def map_err(self, op: Callable[[E], F], /) -> "BaseResult[T, F]":
-        """
-        Apply `op` to the contained error if Err, leaving Ok unchanged.
+        """Apply `op` to the contained error if Err, leaving Ok unchanged.
 
         Returns:
             BaseResult[T, F]: A new Result with the transformed error or
             the original value.
+
         """
 
     @property
@@ -141,18 +138,17 @@ class BaseResult(ABC, Generic[T, E]):
 
     @property
     @abstractmethod
-    def ok(self) -> T | None:
+    def ok(self) -> "T | None":
         """Return the contained value if Ok, otherwise None."""
 
     @property
     @abstractmethod
-    def err(self) -> E | None:
+    def err(self) -> "E | None":
         """Return the contained error if Err, otherwise None."""
 
 
 class Ok(BaseResult[T, Any]):
-    """
-    Successful Result variant.
+    """Successful Result variant.
 
     Wraps a value produced by a computation that succeeded.
     """
@@ -174,11 +170,9 @@ class Ok(BaseResult[T, Any]):
         return self
 
     def __eq__(self, other: Any, /) -> bool:
-        match other:
-            case Ok(value):
-                return self.ok == value
-            case _:
-                return False
+        if isinstance(other, Ok):
+            return self.ok == other.ok
+        return False
 
     def __repr__(self) -> str:
         """Return string representation: `Ok(value)`."""
@@ -211,7 +205,7 @@ class Ok(BaseResult[T, Any]):
 
     @property
     def ok(self) -> T:
-        """the contained value"""
+        """The contained value"""
         return self._value
 
     @property
@@ -221,8 +215,7 @@ class Ok(BaseResult[T, Any]):
 
 
 class Err(BaseResult[Never, E]):
-    """
-    Failed Result variant.
+    """Failed Result variant.
 
     Wraps an error produced by a computation that failed.
     """
@@ -244,11 +237,9 @@ class Err(BaseResult[Never, E]):
         return other
 
     def __eq__(self, other: Any, /) -> bool:
-        match other:
-            case Err(error):
-                return self.err == error
-            case _:
-                return False
+        if isinstance(other, Err):
+            return self._error == other._error
+        return False
 
     def __repr__(self) -> str:
         """Return string representation: `Err(error)`."""
@@ -286,11 +277,11 @@ class Err(BaseResult[Never, E]):
 
     @property
     def err(self) -> E:
-        """the contained error"""
+        """The contained error"""
         return self._error
 
 
-Result: TypeAlias = Ok[Any] | Err[Any]
+Result: TypeAlias = "Ok[Any] | Err[Any]"
 
 
 class SafeFunction(Generic[P, T]):
@@ -306,12 +297,17 @@ class SafeFunction(Generic[P, T]):
             return Err(err)
 
 
-def safe(func: Callable[P, T]) -> Callable[P, T] | SafeFunction[P, T]:
-    """
-    Decorator for functions that may raise exceptions, returning a Result.
-    It doesn't wrap any values and leaks any raised errors if the
-    TKT_DEBUG environment variable is set to "true".
+def safe(func: Callable[P, T]) -> SafeFunction[P, T]:
+    """Decorator for functions that may raise exceptions, returning a Result.
+
+    When the ``TKT_DEBUG`` environment variable is set to ``"true"``,
+    the original function is returned unchanged (for debugging).
+    Otherwise the function is wrapped in a ``SafeFunction`` that
+    catches exceptions and returns a ``Result`` instead.
     """
     if json.loads(os.environ.get("TKT_DEBUG", "false")):
-        return func
+        # Return the original function for debugging — type ignores
+        # because we intentionally return a different type in this
+        # branch.
+        return func  # type: ignore[return-value]
     return SafeFunction(func)
